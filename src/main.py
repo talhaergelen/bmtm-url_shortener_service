@@ -106,8 +106,10 @@ app = FastAPI(
     """,
     version="1.0.0",
     lifespan=lifespan,
-    # ReDoc ve Swagger UI — CDN yerine unpkg kullan (daha güvenilir)
-    redoc_js_url="https://unpkg.com/redoc@latest/bundles/redoc.standalone.js",
+    # CDN yerine local static dosyalar kullan (kısıtlı ağlarda CDN engellenebilir)
+    redoc_js_url="/static/vendor/redoc.standalone.js",
+    swagger_js_url="/static/vendor/swagger-ui-bundle.js",
+    swagger_css_url="/static/vendor/swagger-ui.css",
     swagger_ui_parameters={"persistAuthorization": True},
 )
 
