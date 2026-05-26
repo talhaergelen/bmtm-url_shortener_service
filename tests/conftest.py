@@ -164,15 +164,18 @@ def multiple_urls(db_session):
 def url_factory(db_session):
     """
     URLFactory'yi test session'ı ile yapılandırır.
-    
-    Kullanım:
-        def test_something(url_factory):
-            url = url_factory()           # 1 URL
-            urls = url_factory.build_batch(5)  # 5 URL
     """
-    from tests.factories import URLFactory, configure_factories
+    import sys
+    import os
+    # tests/ klasörünü doğrudan import için path'e ekle
+    tests_dir = os.path.dirname(os.path.abspath(__file__))
+    if tests_dir not in sys.path:
+        sys.path.insert(0, tests_dir)
+    
+    from factories import URLFactory, configure_factories
     configure_factories(db_session)
     return URLFactory
+
 
 
 @pytest.fixture
