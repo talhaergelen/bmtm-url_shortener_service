@@ -86,12 +86,13 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
+      # LocalStack'i başlat (S3 testleri ve Coverage için)
+      - name: LocalStack Başlat
+        run: |
+          docker run -d --name localstack -p 4566:4566 -e SERVICES=s3 localstack/localstack:3.0.2
+          sleep 10
+          
       # Pytest çalıştır
-      # --cov=src               → src/ klasörünün coverage'ını ölç
-      # --cov-fail-under=70     → %70 altında başarısız say
-      # --cov-report=xml        → coverage.xml oluştur (GitHub'a yüklemek için)
-      # -v                      → Verbose (ayrıntılı çıktı)
-      - name: Pytest Çalıştır
         run: |
           pytest tests/unit/ tests/integration/ \
             --cov=src \
