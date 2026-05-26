@@ -1,0 +1,149 @@
+# argocd-application.yaml — ArgoCD GitOps Uygulama Tanımı
+#
+# ArgoCD nedir?
+#   Kubernetes için GitOps aracı.
+#   Git repo'daki manifest değişikliklerini otomatik olarak
+#   Kubernetes cluster'a yansıtır.
+#
+# GitOps nedir?
+#   "Git = Tek kaynak of truth" prensibi.
+#   Kubernetes'e ne dağıtılacağını Git'teki YAML dosyaları belirler.
+#   Elle kubectl apply çalıştırmaya gerek yok — ArgoCD halleder.
+#
+# Akış:
+#   1. Developer → kod yazar → git push
+#   2. GitHub Actions → CI testleri çalıştırır → Docker image build
+#   3. ArgoCD → Git repo'yu izler → değişiklik görür → K8s'e uygular
+#   4. ArgoCD → Deployed state = Desired state (sync)
+#
+# Kurulum:
+#   kubectl create namespace argocd
+#   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+#   kubectl apply -f k8s/argocd-application.yaml
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: url-shortener
+  namespace: argocd
+
+  # ArgoCD bu annotation ile finalizer ekler
+  # Uygulama silinince K8s kaynakları da silinsin
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+
+  labels:
+    app: url-shortener
+    environment: production
+    team: bmtm
+
+spec:
+  # ── PROJE ─────────────────────────────────────────────
+  # ArgoCD projeleri kaynakları gruplar ve erişim kontrol eder
+  project: default
+
+  # ── KAYNAK (GIT REPO) ─────────────────────────────────
+  source:
+    # GitHub repo adresi
+    repoURL: https://github.com/talhaergelen/bmtm-url_shortener_service
+
+    # Hangi branch'ı izle?
+    targetRevision: HEAD  # Her zaman en son commit
+
+    # Repo içinde hangi klasör K8s manifest içeriyor?
+    path: k8s
+
+    # Helm chart kullanmak için (k8s/ yerine helm/ klasörü):
+    # path: helm/url-shortener
+    # helm:
+    #   valueFiles:
+    #     - values.yaml
+    #   parameters:
+    #     - name: replicaCount
+    #       value: "2"
+
+  # ── HEDEF (K8s CLUSTER) ───────────────────────────────
+  destination:
+    # Minikube local cluster
+    server: https://kubernetes.default.svc
+
+    # Hangi namespace'e deploy?
+    namespace: default
+
+  # ── SYNC AYARLARI ─────────────────────────────────────
+  syncPolicy:
+    # Otomatik sync — Git'te değişiklik olunca K8s'e yansıt
+    automated:
+      # Git'te silinen kaynak K8s'de de silinsin
+      prune: true
+
+      # Cluster'daki manuel değişiklik Git state'e dönsün (drift düzeltme)
+      selfHeal: true
+
+      # İlk kurulumda namespace otomatik oluşsun
+      allowEmpty: false
+
+    syncOptions:
+      # Sync öncesi validation yap
+      - Validate=true
+
+      # Namespace yoksa oluştur
+      - CreateNamespace=true
+
+      # PVC'leri koruma altına al (silme)
+      - PrunePropagationPolicy=foreground
+
+      # Sync sırasında PVC'leri silme
+      - PruneLast=true
+
+    # Sync başarısız olursa tekrar dene
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # ── SAĞLIK KONTROLLERİ ────────────────────────────────
+  # ArgoCD hangi kaynakların "healthy" olduğunu nasıl anlar?
+  # Default kontroller: Deployment rollout status, Service endpoints, vb.
+  # Özel kontrol eklemek için ignoreDifferences kullanılır
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        # Replica sayısı HPA/KEDA tarafından değiştirilebilir — ignore et
+        - /spec/replicas
+
+  # ── BİLDİRİMLER (NOTIFICATION) ────────────────────────
+  # argocd-notifications ile Slack/Email bildirimi gönderilebilir
+  # Bu özellik için argocd-notifications kurulması gerekir
+
+---
+# ArgoCD AppProject — Proje tanımı (opsiyonel, security için önerilir)
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: url-shortener-project
+  namespace: argocd
+spec:
+  description: "URL Shortener Service — BMTM Dönem Projesi"
+
+  # Hangi Git repoları kullanılabilir?
+  sourceRepos:
+    - https://github.com/talhaergelen/bmtm-url_shortener_service
+
+  # Hangi cluster/namespace'e deploy edilebilir?
+  destinations:
+    - namespace: default
+      server: https://kubernetes.default.svc
+    - namespace: url-shortener
+      server: https://kubernetes.default.svc
+
+  # Hangi K8s kaynak türleri kullanılabilir?
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

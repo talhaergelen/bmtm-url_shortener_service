@@ -31,10 +31,16 @@ class Settings(BaseSettings):
     aws_default_region: str = "us-east-1"
     s3_bucket_name: str = "url-shortener-stats"
 
+    # OpenTelemetry (Distributed Tracing — Bonus +5)
+    # Jaeger OTLP HTTP endpoint
+    otlp_endpoint: str = "http://localhost:4318/v1/traces"
+    tracing_enabled: bool = True
+
     class Config:
         env_file = ".env"  # .env dosyasından okur
         case_sensitive = False
         extra = "ignore"  # Tanımlanmamış .env değerlerini yoksay
+
 
 
 @lru_cache()  # Ayarları her seferinde yeniden okumamak için önbelleğe alır

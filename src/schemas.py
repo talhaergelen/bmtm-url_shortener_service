@@ -22,7 +22,7 @@ Pydantic nedir?
 
 from pydantic import BaseModel, HttpUrl, field_validator
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 
 # ─────────────────────────────────────────────────────────
@@ -102,7 +102,7 @@ class URLStats(BaseModel):
 
 class URLList(BaseModel):
     """URL listesi için şema."""
-    urls: list[URLResponse]
+    urls: List[URLResponse]
     total: int
 
 

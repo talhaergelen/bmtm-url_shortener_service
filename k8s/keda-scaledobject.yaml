@@ -1,0 +1,79 @@
+# keda-scaledobject.yaml — KEDA Event-Driven Autoscaling
+#
+# KEDA nedir?
+#   Kubernetes Event-Driven Autoscaling.
+#   Normal HPA sadece CPU/Memory'e göre scale eder.
+#   KEDA ise HTTP istek sayısı, queue uzunluğu, Prometheus metriği gibi
+#   harici olaylara göre scale edebilir.
+#   Hatta 0'a kadar küçültebilir (scale-to-zero)!
+#
+# Bu manifest ne yapıyor?
+#   Prometheus'taki "aktif URL sayısı" ve "HTTP istek hızı" metriğine göre
+#   pod sayısını otomatik ayarlar.
+#
+# Kurulum:
+#   kubectl apply -f https://github.com/kedacore/keda/releases/download/v2.13.0/keda-2.13.0.yaml
+#   kubectl apply -f k8s/keda-scaledobject.yaml
+
+---
+# KEDA ScaledObject — Prometheus metriğine göre scale
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: url-shortener-scaledobject
+  namespace: default
+  labels:
+    app: url-shortener
+    component: autoscaling
+spec:
+  # Hangi Deployment'ı scale edeceğiz?
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: url-shortener
+
+  # Pod sayısı sınırları
+  minReplicaCount: 1   # En az 1 pod (0 yapılabilir ama uygulama uykuya girer)
+  maxReplicaCount: 10  # En fazla 10 pod
+
+  # Scale kararı için bekleme süreleri
+  pollingInterval: 15   # Her 15 saniyede bir metriği kontrol et
+  cooldownPeriod: 60    # Scale-down sonrası 60s bekle (salınımı önle)
+
+  # Metrikler — Birden fazla metrik kullanılabilir
+  triggers:
+    # Trigger 1: HTTP İstek Hızı
+    # Saniyede 50'den fazla istek → scale up
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus:9090
+        metricName: url_shortener_http_request_rate
+        # PromQL: Son 2 dakikadaki istek hızı (req/s)
+        query: |
+          sum(rate(url_shortener_request_duration_seconds_count[2m]))
+        # Her pod başına 50 req/s → 100 req/s geliyorsa 2 pod aç
+        threshold: "50"
+
+    # Trigger 2: Aktif URL Sayısı
+    # 1000'den fazla aktif URL → daha fazla pod
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus:9090
+        metricName: url_shortener_active_urls_count
+        # PromQL: Veritabanındaki toplam URL sayısı
+        query: url_shortener_active_urls
+        # Her 1000 URL için 1 pod (ölçek = metrik / threshold)
+        threshold: "1000"
+
+---
+# KEDA TriggerAuthentication — Prometheus kimlik doğrulama (opsiyonel)
+# Bu projede Prometheus auth yok, bu yüzden yorum satırı
+# apiVersion: keda.sh/v1alpha1
+# kind: TriggerAuthentication
+# metadata:
+#   name: prometheus-auth
+# spec:
+#   secretTargetRef:
+#     - parameter: bearerToken
+#       name: prometheus-token
+#       key: token

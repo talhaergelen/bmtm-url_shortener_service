@@ -1,0 +1,17 @@
+apiVersion: v2
+name: url-shortener
+description: |
+  URL Shortener Service — Bulut Mimarilerinde Test Mühendisliği Dönem Projesi.
+  Kısa link üret, redirect et, tıklama sayısını takip et.
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - url-shortener
+  - fastapi
+  - python
+  - microservice
+home: https://github.com/talhaergelen/bmtm-url_shortener_service
+maintainers:
+  - name: URL Shortener Team
+    email: team@example.com

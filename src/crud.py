@@ -15,6 +15,7 @@ CRUD nedir?
   Delete → Kısa URL'yi sil (DELETE FROM urls WHERE id = ...)
 """
 
+from typing import Optional, List
 from sqlalchemy.orm import Session
 from . import models, schemas
 from .shortener import generate_unique_short_code, is_valid_url
@@ -68,7 +69,7 @@ def create_short_url(db: Session, url_data: schemas.URLCreate) -> models.URL:
 # READ — Kayıt Okuma
 # ─────────────────────────────────────────────────────────
 
-def get_url_by_short_code(db: Session, short_code: str) -> models.URL | None:
+def get_url_by_short_code(db: Session, short_code: str) -> Optional[models.URL]:
     """
     Kısa koda göre URL'yi bulur.
     
@@ -82,7 +83,7 @@ def get_url_by_short_code(db: Session, short_code: str) -> models.URL | None:
     return db.query(models.URL).filter(models.URL.short_code == short_code).first()
 
 
-def get_all_urls(db: Session, skip: int = 0, limit: int = 100) -> list[models.URL]:
+def get_all_urls(db: Session, skip: int = 0, limit: int = 100) -> List[models.URL]:
     """
     Tüm URL'leri listeler.
     

@@ -22,6 +22,7 @@ Bu dosyada ne yapıyoruz?
 import boto3
 import json
 import logging
+from typing import List
 from datetime import datetime
 from botocore.exceptions import ClientError, EndpointResolutionError
 from .config import get_settings
@@ -133,7 +134,7 @@ def upload_stats_to_s3(stats: dict) -> bool:
         return False
 
 
-def get_stats_from_s3(date: str) -> list[dict]:
+def get_stats_from_s3(date: str) -> List[dict]:
     """
     Belirli bir tarihe ait istatistikleri S3'ten çeker.
     

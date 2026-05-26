@@ -3,28 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>URL Kısaltıcı — URL Shortener Service</title>
-  <meta name="description" content="Uzun URL'lerinizi hızlıca kısaltın. Kısa linkler oluşturun, tıklama istatistiklerini takip edin." />
+  <title>URL Shortener — Admin Dashboard</title>
+  <meta name="description" content="URL Shortener Service Admin Paneli — URL yönetimi, canlı metrikler ve servis izleme." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     /* ── DESIGN TOKENS ── */
     :root {
-      --bg: #0a0a0f;
-      --surface: #12121a;
-      --surface2: #1a1a26;
-      --border: rgba(139, 92, 246, 0.2);
-      --accent: #8b5cf6;
-      --accent2: #06b6d4;
-      --text: #f1f5f9;
-      --text-muted: #64748b;
-      --success: #10b981;
-      --error: #ef4444;
-      --radius: 12px;
-      --shadow: 0 4px 32px rgba(139, 92, 246, 0.12);
+      --bg:        #08090f;
+      --surface:   #10111a;
+      --surface2:  #181928;
+      --surface3:  #1f2035;
+      --border:    rgba(139,92,246,.18);
+      --border2:   rgba(139,92,246,.35);
+      --accent:    #8b5cf6;
+      --accent2:   #06b6d4;
+      --accent3:   #f59e0b;
+      --green:     #10b981;
+      --red:       #ef4444;
+      --text:      #f1f5f9;
+      --muted:     #64748b;
+      --muted2:    #94a3b8;
+      --radius:    14px;
+      --r-sm:      8px;
+      --shadow:    0 8px 40px rgba(139,92,246,.12);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Inter', sans-serif;
@@ -32,572 +37,990 @@
       color: var(--text);
       min-height: 100vh;
       display: flex;
-      flex-direction: column;
-      align-items: center;
     }
 
-    /* ── ARKA PLAN GLOW ── */
-    body::before {
-      content: '';
-      position: fixed;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(ellipse at 60% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 60%),
-                  radial-gradient(ellipse at 20% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* ── HEADER ── */
-    header {
-      width: 100%;
-      padding: 20px 40px;
+    /* ── SIDEBAR ── */
+    aside {
+      width: 220px;
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
       display: flex;
-      align-items: center;
-      gap: 12px;
-      border-bottom: 1px solid var(--border);
-      background: rgba(18, 18, 26, 0.8);
-      backdrop-filter: blur(12px);
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      flex-direction: column;
+      padding: 24px 0;
+      position: fixed;
+      left: 0; top: 0;
+      z-index: 100;
     }
 
-    .logo {
-      font-size: 1.4rem;
+    .sidebar-logo {
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .sidebar-logo .logo-text {
+      font-size: 1.1rem;
       font-weight: 700;
       background: linear-gradient(135deg, var(--accent), var(--accent2));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      display: block;
     }
 
-    .badge {
-      background: rgba(139, 92, 246, 0.15);
-      border: 1px solid rgba(139, 92, 246, 0.3);
-      color: var(--accent);
+    .sidebar-logo .logo-sub {
       font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .nav-section-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      padding: 8px 20px 4px;
       font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 20px;
-      letter-spacing: 0.05em;
     }
 
-    /* ── MAIN ── */
-    main {
-      position: relative;
-      z-index: 1;
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      font-size: 0.85rem;
+      color: var(--muted2);
+      cursor: pointer;
+      border: none;
+      background: none;
       width: 100%;
-      max-width: 680px;
-      padding: 60px 24px 40px;
+      text-align: left;
+      border-radius: 0;
+      transition: color .2s, background .2s;
+      font-family: inherit;
+      text-decoration: none;
     }
 
-    /* ── HERO ── */
-    .hero {
-      text-align: center;
-      margin-bottom: 40px;
+    .nav-item:hover { color: var(--text); background: rgba(139,92,246,.08); }
+    .nav-item.active { color: var(--accent); background: rgba(139,92,246,.12); font-weight: 600; border-right: 2px solid var(--accent); }
+    .nav-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+
+    .nav-divider { height: 1px; background: var(--border); margin: 12px 20px; }
+
+    /* Health dot in sidebar */
+    .health-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--muted);
+      display: inline-block;
+      margin-left: auto;
+      transition: background .3s;
+    }
+    .health-dot.ok { background: var(--green); box-shadow: 0 0 6px var(--green); }
+    .health-dot.err { background: var(--red); }
+
+    /* ── MAIN CONTENT ── */
+    .main-wrap {
+      margin-left: 220px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
 
-    .hero h1 {
-      font-size: clamp(2rem, 5vw, 3rem);
-      font-weight: 700;
-      line-height: 1.15;
-      margin-bottom: 16px;
-      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+    /* Top bar */
+    .topbar {
+      background: rgba(16,17,26,.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0; z-index: 50;
     }
 
-    .hero p {
-      color: var(--text-muted);
-      font-size: 1rem;
-      line-height: 1.6;
+    .topbar-title { font-weight: 600; font-size: .95rem; }
+
+    .stat-pills {
+      display: flex;
+      gap: 10px;
     }
 
-    /* ── KART ── */
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+      color: var(--muted2);
+    }
+
+    .stat-pill .val { color: var(--text); font-weight: 600; }
+
+    /* ── PAGE CONTENT ── */
+    .page { display: none; padding: 28px 32px; flex: 1; }
+    .page.active { display: block; }
+
+    /* ── GRID ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+    /* ── CARD ── */
     .card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 28px;
+      padding: 22px;
       box-shadow: var(--shadow);
-      transition: border-color 0.3s ease;
+      transition: border-color .2s;
+    }
+    .card:hover { border-color: var(--border2); }
+    .card-title {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      font-weight: 600;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .card:hover {
-      border-color: rgba(139, 92, 246, 0.4);
+    /* ── METRIC CARDS ── */
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
     }
+    .metric-card .m-icon { font-size: 1.5rem; margin-bottom: 8px; }
+    .metric-card .m-val {
+      font-size: 2rem;
+      font-weight: 700;
+      font-family: 'JetBrains Mono', monospace;
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+    .metric-card .m-label { font-size: .75rem; color: var(--muted); }
+    .metric-card.purple .m-val { color: var(--accent); }
+    .metric-card.cyan .m-val   { color: var(--accent2); }
+    .metric-card.green .m-val  { color: var(--green); }
+    .metric-card.amber .m-val  { color: var(--accent3); }
 
     /* ── FORM ── */
-    .form-group {
-      display: flex;
-      gap: 10px;
-    }
+    .form-row { display: flex; gap: 10px; }
 
-    #url-input {
+    input[type="url"], input[type="text"] {
       flex: 1;
       background: var(--surface2);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 16px;
+      border-radius: var(--r-sm);
+      padding: 11px 14px;
       color: var(--text);
-      font-size: 0.95rem;
+      font-size: .9rem;
       font-family: inherit;
       outline: none;
-      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      transition: border-color .2s, box-shadow .2s;
     }
+    input::placeholder { color: var(--muted); }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139,92,246,.15); }
+    input.err { border-color: var(--red); box-shadow: 0 0 0 3px rgba(239,68,68,.15); }
 
-    #url-input::placeholder { color: var(--text-muted); }
-
-    #url-input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
-    }
-
-    #url-input.error {
-      border-color: var(--error);
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
-    }
-
-    #shorten-btn {
-      background: linear-gradient(135deg, var(--accent), #7c3aed);
+    .btn {
       border: none;
-      border-radius: 8px;
-      padding: 12px 24px;
-      color: #fff;
-      font-size: 0.9rem;
+      border-radius: var(--r-sm);
+      padding: 11px 22px;
+      font-size: .88rem;
       font-weight: 600;
       font-family: inherit;
       cursor: pointer;
+      transition: opacity .2s, transform .1s;
       white-space: nowrap;
-      transition: opacity 0.2s, transform 0.1s;
     }
+    .btn:hover { opacity: .9; transform: translateY(-1px); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 
-    #shorten-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-    #shorten-btn:active { transform: translateY(0); }
-    #shorten-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-    /* ── HATA MESAJI ── */
-    #error-msg {
-      display: none;
-      color: var(--error);
-      font-size: 0.82rem;
-      margin-top: 8px;
-    }
-
-    /* ── SONUÇ KUTUSU ── */
-    #result-box {
-      display: none;
-      margin-top: 20px;
-      background: var(--surface2);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 8px;
-      padding: 16px;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .result-label {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 8px;
-    }
-
-    .result-url-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    #result-short-url {
-      flex: 1;
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; }
+    .btn-ghost {
       background: transparent;
-      border: none;
-      color: var(--success);
-      font-size: 1rem;
-      font-weight: 600;
-      font-family: 'Courier New', monospace;
-      cursor: text;
-      outline: none;
+      border: 1px solid var(--border);
+      color: var(--muted2);
     }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); color: var(--red); padding: 6px 10px; font-size:.8rem; }
+    .btn-copy { background: rgba(16,185,129,.1); border: 1px solid rgba(16,185,129,.3); color: var(--green); padding: 6px 12px; font-size: .8rem; }
 
-    #copy-btn {
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      border-radius: 6px;
-      padding: 6px 12px;
-      color: var(--success);
-      font-size: 0.8rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s;
-      font-family: inherit;
+    /* ── RESULT BOX ── */
+    .result-box {
+      display: none;
+      margin-top: 16px;
+      background: rgba(16,185,129,.06);
+      border: 1px solid rgba(16,185,129,.25);
+      border-radius: var(--r-sm);
+      padding: 16px;
+      animation: fadeUp .3s ease;
     }
+    .result-label { font-size: .72rem; color: var(--green); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+    .result-row { display: flex; align-items: center; gap: 8px; }
+    .result-url { flex: 1; font-family: 'JetBrains Mono', monospace; color: var(--green); font-size: .9rem; background: transparent; border: none; outline: none; }
+    .result-meta { display: flex; gap: 16px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(16,185,129,.15); flex-wrap: wrap; }
+    .meta-item .mk { font-size: .68rem; color: var(--muted); }
+    .meta-item .mv { font-size: .82rem; font-weight: 600; }
 
-    #copy-btn:hover { background: rgba(16, 185, 129, 0.2); }
+    .err-msg { display: none; color: var(--red); font-size: .8rem; margin-top: 6px; }
 
-    .result-meta {
-      display: flex;
-      gap: 16px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid var(--border);
-    }
-
-    .meta-item {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .meta-key { font-size: 0.72rem; color: var(--text-muted); }
-    .meta-val { font-size: 0.85rem; font-weight: 500; }
-
-    /* ── TABLO ── */
-    .list-section {
-      margin-top: 32px;
-    }
-
-    .section-header {
+    /* ── URL LIST TABLE ── */
+    .section-hdr {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin: 22px 0 12px;
     }
+    .section-hdr h3 { font-size: .85rem; font-weight: 600; color: var(--muted2); }
 
-    .section-title {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text-muted);
+    .url-table { width: 100%; border-collapse: collapse; }
+    .url-table th {
+      font-size: .7rem;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: .08em;
+      color: var(--muted);
+      font-weight: 600;
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
     }
-
-    #refresh-btn {
-      background: transparent;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 4px 10px;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      cursor: pointer;
-      font-family: inherit;
-      transition: border-color 0.2s, color 0.2s;
+    .url-table td {
+      padding: 10px 12px;
+      font-size: .84rem;
+      border-bottom: 1px solid rgba(139,92,246,.07);
+      vertical-align: middle;
     }
+    .url-table tr:hover td { background: rgba(139,92,246,.04); }
+    .url-table tr:last-child td { border-bottom: none; }
 
-    #refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-    #url-list { display: flex; flex-direction: column; gap: 8px; }
-
-    .url-item {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: border-color 0.2s;
-    }
-
-    .url-item:hover { border-color: rgba(139, 92, 246, 0.4); }
-
-    .url-item-code {
-      font-family: 'Courier New', monospace;
-      font-weight: 700;
+    .code-badge {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(139,92,246,.12);
       color: var(--accent);
-      font-size: 0.9rem;
-      min-width: 70px;
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: .82rem;
+      font-weight: 600;
     }
-
-    .url-item-original {
-      flex: 1;
-      font-size: 0.82rem;
-      color: var(--text-muted);
+    .url-orig {
+      max-width: 220px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+      color: var(--muted2);
+      display: block;
     }
-
-    .url-item-clicks {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      white-space: nowrap;
-    }
-
-    .url-item-clicks span {
+    .click-badge {
+      font-family: 'JetBrains Mono', monospace;
       color: var(--accent2);
       font-weight: 600;
     }
+    .empty-state { text-align: center; padding: 32px; color: var(--muted); font-size: .88rem; }
 
-    .url-item-delete {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 1rem;
-      cursor: pointer;
-      padding: 2px 4px;
-      border-radius: 4px;
-      transition: color 0.2s, background 0.2s;
+    /* ── METRICS PAGE ── */
+    .metric-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
     }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-key { font-family: 'JetBrains Mono', monospace; font-size: .8rem; color: var(--muted2); }
+    .metric-value { font-family: 'JetBrains Mono', monospace; font-size: .88rem; font-weight: 600; color: var(--accent2); }
 
-    .url-item-delete:hover { color: var(--error); background: rgba(239,68,68,0.08); }
-
-    .empty-state {
-      text-align: center;
-      padding: 30px;
-      color: var(--text-muted);
-      font-size: 0.9rem;
+    /* ── TOOLS PAGE ── */
+    .tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+    .tool-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      text-decoration: none;
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color .2s, transform .2s;
     }
+    .tool-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .tool-card .t-icon { font-size: 1.6rem; }
+    .tool-card .t-name { font-weight: 600; font-size: .88rem; }
+    .tool-card .t-desc { font-size: .75rem; color: var(--muted); line-height: 1.4; }
+    .tool-card .t-url { font-size: .72rem; font-family: 'JetBrains Mono', monospace; color: var(--accent); margin-top: auto; }
+    .tool-card.disabled { opacity: .45; pointer-events: none; }
 
-    /* ── FOOTER ── */
-    footer {
-      width: 100%;
-      padding: 20px 40px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      border-top: 1px solid var(--border);
-      margin-top: auto;
+    /* ── STATUS BADGES ── */
+    .badge-ok  { background: rgba(16,185,129,.15); color: var(--green); border: 1px solid rgba(16,185,129,.3); padding: 2px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+    .badge-err { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.3); padding: 2px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+    .badge-warn { background: rgba(245,158,11,.12); color: var(--accent3); border: 1px solid rgba(245,158,11,.3); padding: 2px 10px; border-radius: 20px; font-size: .72rem; font-weight: 600; }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-
-    .loading { opacity: 0.6; pointer-events: none; }
-
-    /* ── LOADING SPINNER ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
     .spinner {
       display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255,255,255,0.3);
+      width: 13px; height: 13px;
+      border: 2px solid rgba(255,255,255,.3);
       border-top-color: #fff;
       border-radius: 50%;
-      animation: spin 0.6s linear infinite;
+      animation: spin .6s linear infinite;
       vertical-align: middle;
     }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .pulse { animation: pulse 1.5s ease infinite; }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(139,92,246,.3); border-radius: 3px; }
+
+    /* Page header */
+    .page-header { margin-bottom: 24px; }
+    .page-header h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
+    .page-header p { color: var(--muted); font-size: .85rem; }
+
+    /* Prometheus raw */
+    #raw-metrics {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .75rem;
+      color: var(--muted2);
+      max-height: 320px;
+      overflow-y: auto;
+      line-height: 1.6;
+      white-space: pre;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      aside { width: 60px; }
+      .sidebar-logo, .nav-section-label, .nav-item span.label { display: none; }
+      .main-wrap { margin-left: 60px; }
+      .nav-item { justify-content: center; padding: 12px; }
+      .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
-  <header>
-    <span class="logo">🔗 URL Shortener</span>
-    <span class="badge">v1.0.0</span>
-  </header>
 
-  <main>
-    <div class="hero">
-      <h1>Uzun URL'leri<br/>Kısaltın</h1>
-      <p>Hızlı, güvenli ve tıklama takipli kısa linkler oluşturun.</p>
+<!-- ── SIDEBAR ── -->
+<aside>
+  <div class="sidebar-logo">
+    <span class="logo-text">🔗 URL Shortener</span>
+    <span class="logo-sub">Admin Dashboard v1.0</span>
+  </div>
+
+  <span class="nav-section-label">MENÜ</span>
+
+  <button class="nav-item active" onclick="showPage('home', this)" id="nav-home">
+    <span class="icon">🏠</span><span class="label">Ana Sayfa</span>
+  </button>
+  <button class="nav-item" onclick="showPage('urls', this)" id="nav-urls">
+    <span class="icon">🔗</span><span class="label">URL Yönetimi</span>
+  </button>
+  <button class="nav-item" onclick="showPage('metrics', this)" id="nav-metrics">
+    <span class="icon">📊</span><span class="label">Metrikler</span>
+  </button>
+  <button class="nav-item" onclick="showPage('tools', this)" id="nav-tools">
+    <span class="icon">🛠</span><span class="label">Servisler</span>
+  </button>
+
+  <div class="nav-divider"></div>
+  <span class="nav-section-label">DURUM</span>
+
+  <div class="nav-item" style="cursor:default;">
+    <span class="icon">❤️</span>
+    <span class="label">Sağlık</span>
+    <span class="health-dot" id="sidebar-health"></span>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<div class="main-wrap">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <span class="topbar-title" id="topbar-title">🏠 Ana Sayfa</span>
+    <div class="stat-pills">
+      <div class="stat-pill">🔗 Toplam URL: <span class="val" id="pill-urls">—</span></div>
+      <div class="stat-pill">👆 Toplam Tıklama: <span class="val" id="pill-clicks">—</span></div>
+      <div class="stat-pill" id="pill-health">⏳ Kontrol ediliyor...</div>
+    </div>
+  </div>
+
+  <!-- ── SAYFA 1: ANA SAYFA ── -->
+  <div class="page active" id="page-home">
+    <div class="page-header">
+      <h2>⚡ Hızlı URL Kısalt</h2>
+      <p>Uzun URL'yi yapıştır, tek tıkla kısalt.</p>
     </div>
 
-    <!-- KISALTMA FORMU -->
-    <div class="card">
-      <div class="form-group">
-        <input
-          type="url"
-          id="url-input"
-          placeholder="https://uzun-adresinizi-buraya-yapistirin.com/..."
-          autocomplete="off"
-          aria-label="Kısaltılacak URL"
-        />
-        <button id="shorten-btn" onclick="shortenUrl()">Kısalt</button>
+    <!-- Metric cards -->
+    <div class="grid-4" style="margin-bottom:24px;" id="home-metrics">
+      <div class="metric-card purple">
+        <div class="m-icon">🔗</div>
+        <div class="m-val" id="hm-urls">—</div>
+        <div class="m-label">Toplam URL</div>
       </div>
-      <div id="error-msg" role="alert"></div>
+      <div class="metric-card cyan">
+        <div class="m-icon">👆</div>
+        <div class="m-val" id="hm-clicks">—</div>
+        <div class="m-label">Toplam Tıklama</div>
+      </div>
+      <div class="metric-card green">
+        <div class="m-icon">✅</div>
+        <div class="m-val" id="hm-health">—</div>
+        <div class="m-label">Servis Durumu</div>
+      </div>
+      <div class="metric-card amber">
+        <div class="m-icon">⚡</div>
+        <div class="m-val" id="hm-created">—</div>
+        <div class="m-label">Son 1 dk</div>
+      </div>
+    </div>
 
-      <!-- SONUÇ KUTUSU -->
-      <div id="result-box" aria-live="polite">
+    <!-- Shorten form -->
+    <div class="card">
+      <div class="card-title">✂️ URL KISALT</div>
+      <div class="form-row">
+        <input type="url" id="url-input" placeholder="https://uzun-adresinizi-buraya-yapistirin.com/..." autocomplete="off" />
+        <button class="btn btn-primary" onclick="shortenUrl()" id="shorten-btn">Kısalt</button>
+      </div>
+      <div class="err-msg" id="err-msg"></div>
+
+      <div class="result-box" id="result-box">
         <div class="result-label">✅ Kısa URL Oluşturuldu</div>
-        <div class="result-url-row">
-          <input type="text" id="result-short-url" readonly aria-label="Kısa URL" />
-          <button id="copy-btn" onclick="copyUrl()">Kopyala</button>
+        <div class="result-row">
+          <input type="text" class="result-url" id="result-url" readonly />
+          <button class="btn btn-copy" onclick="copyUrl()">Kopyala</button>
+          <button class="btn btn-ghost" style="padding:6px 12px;font-size:.8rem;" onclick="openUrl()">↗ Aç</button>
         </div>
         <div class="result-meta">
-          <div class="meta-item">
-            <span class="meta-key">Kısa Kod</span>
-            <span class="meta-val" id="meta-code">—</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-key">Tıklama</span>
-            <span class="meta-val" id="meta-clicks">0</span>
-          </div>
-          <div class="meta-item">
-            <span class="meta-key">Oluşturulma</span>
-            <span class="meta-val" id="meta-created">—</span>
-          </div>
+          <div class="meta-item"><div class="mk">Kısa Kod</div><div class="mv" id="m-code">—</div></div>
+          <div class="meta-item"><div class="mk">Tıklama</div><div class="mv" id="m-clicks">0</div></div>
+          <div class="meta-item"><div class="mk">Oluşturulma</div><div class="mv" id="m-date">—</div></div>
         </div>
       </div>
     </div>
 
-    <!-- URL LİSTESİ -->
-    <div class="list-section">
-      <div class="section-header">
-        <span class="section-title">📋 Tüm Kısa URL'ler</span>
-        <button id="refresh-btn" onclick="loadUrls()">↻ Yenile</button>
+    <!-- Recent URLs -->
+    <div class="section-hdr">
+      <h3>📋 Son URL'ler</h3>
+      <button class="btn btn-ghost" onclick="loadUrls('home-list')" style="padding:6px 12px;font-size:.8rem;">↻ Yenile</button>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="url-table">
+        <thead>
+          <tr>
+            <th>KOD</th>
+            <th>ORİJİNAL URL</th>
+            <th>TIKLANMA</th>
+            <th>TARİH</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="home-list"><tr><td colspan="5" class="empty-state">Yükleniyor...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── SAYFA 2: URL YÖNETİMİ ── -->
+  <div class="page" id="page-urls">
+    <div class="page-header">
+      <h2>🔗 URL Yönetimi</h2>
+      <p>Tüm kısa URL'leri görüntüle, sil ve istatistiklerini izle.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title">➕ YENİ URL EKLE</div>
+      <div class="form-row">
+        <input type="url" id="url-input-2" placeholder="https://..." autocomplete="off" />
+        <button class="btn btn-primary" onclick="shortenUrl2()">Kısalt</button>
       </div>
-      <div id="url-list">
-        <div class="empty-state">Yükleniyor...</div>
+      <div class="err-msg" id="err-msg-2"></div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-weight:600;font-size:.9rem;">Tüm URL'ler</span>
+        <button class="btn btn-ghost" onclick="loadUrls('url-list-full')" style="padding:6px 12px;font-size:.8rem;">↻ Yenile</button>
+      </div>
+      <table class="url-table">
+        <thead>
+          <tr>
+            <th>KOD</th>
+            <th>ORİJİNAL URL</th>
+            <th>KISA URL</th>
+            <th>TIKLANMA</th>
+            <th>TARİH</th>
+            <th>İŞLEM</th>
+          </tr>
+        </thead>
+        <tbody id="url-list-full"><tr><td colspan="6" class="empty-state">Yükleniyor...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── SAYFA 3: METRİKLER ── -->
+  <div class="page" id="page-metrics">
+    <div class="page-header">
+      <h2>📊 Canlı Metrikler</h2>
+      <p>Prometheus metrikleri ve uygulama istatistikleri — otomatik güncellenir.</p>
+    </div>
+
+    <div class="grid-4" style="margin-bottom:24px;">
+      <div class="metric-card purple">
+        <div class="m-icon">🔗</div>
+        <div class="m-val" id="pm-created">—</div>
+        <div class="m-label">URL Oluşturma (toplam)</div>
+      </div>
+      <div class="metric-card cyan">
+        <div class="m-icon">↪️</div>
+        <div class="m-val" id="pm-redirects">—</div>
+        <div class="m-label">Redirect (toplam)</div>
+      </div>
+      <div class="metric-card amber">
+        <div class="m-icon">📦</div>
+        <div class="m-val" id="pm-active">—</div>
+        <div class="m-label">Aktif URL</div>
+      </div>
+      <div class="metric-card" style="border-color:rgba(239,68,68,.25);">
+        <div class="m-icon">❌</div>
+        <div class="m-val" id="pm-404" style="color:var(--red);">—</div>
+        <div class="m-label">404 Hatası</div>
       </div>
     </div>
-  </main>
 
-  <footer>
-    Bulut Mimarilerinde Test Mühendisliği &mdash; Konu #1: URL Shortener Service &mdash;
-    <a href="/docs" style="color: var(--accent); text-decoration: none;">API Docs</a>
-  </footer>
+    <div class="grid-2">
+      <!-- Parsed metrics -->
+      <div class="card">
+        <div class="card-title">📈 UYGULAMA METRİKLERİ
+          <button class="btn btn-ghost" onclick="loadMetrics()" style="padding:3px 10px;font-size:.72rem;margin-left:auto;">↻</button>
+        </div>
+        <div id="parsed-metrics">
+          <div class="empty-state pulse">Metrikler yükleniyor...</div>
+        </div>
+      </div>
 
-  <script>
-    const API_BASE = '';  // Aynı origin
+      <!-- Health & info -->
+      <div class="card">
+        <div class="card-title">🏥 SERVİS SAĞLIĞI</div>
+        <div id="health-details">
+          <div class="empty-state pulse">Kontrol ediliyor...</div>
+        </div>
+      </div>
+    </div>
 
-    // ── URL KISALTMA ──────────────────────────────────────
-    async function shortenUrl() {
-      const input = document.getElementById('url-input');
-      const btn   = document.getElementById('shorten-btn');
-      const errEl = document.getElementById('error-msg');
-      const url   = input.value.trim();
+    <!-- Raw Prometheus -->
+    <div class="card" style="margin-top:20px;">
+      <div class="card-title">🔢 PROMETHEUS RAW (/metrics)
+        <a href="/metrics" target="_blank" style="margin-left:auto;font-size:.72rem;color:var(--accent);text-decoration:none;">Tam görüntüle ↗</a>
+      </div>
+      <div id="raw-metrics" class="pulse">Yükleniyor...</div>
+    </div>
+  </div>
 
-      // Hata temizle
-      input.classList.remove('error');
-      errEl.style.display = 'none';
+  <!-- ── SAYFA 4: SERVİSLER ── -->
+  <div class="page" id="page-tools">
+    <div class="page-header">
+      <h2>🛠 Servisler & Araçlar</h2>
+      <p>Tüm servis linkleri ve API araçları tek yerde.</p>
+    </div>
 
-      // Boş kontrol
-      if (!url) {
-        showError('Lütfen bir URL girin.');
-        return;
-      }
+    <div class="card-title" style="margin-bottom:14px;">🔗 API & UYGULAMA</div>
+    <div class="tool-grid" style="margin-bottom:28px;">
+      <a href="/docs" target="_blank" class="tool-card">
+        <span class="t-icon">📖</span>
+        <span class="t-name">Swagger UI</span>
+        <span class="t-desc">API endpoint'lerini tarayıcıdan test et</span>
+        <span class="t-url">localhost:8000/docs</span>
+      </a>
+      <a href="/redoc" target="_blank" class="tool-card">
+        <span class="t-icon">📄</span>
+        <span class="t-name">ReDoc</span>
+        <span class="t-desc">Alternatif API dokümantasyonu</span>
+        <span class="t-url">localhost:8000/redoc</span>
+      </a>
+      <a href="/health" target="_blank" class="tool-card">
+        <span class="t-icon">❤️</span>
+        <span class="t-name">Health Check</span>
+        <span class="t-desc">Servis sağlık durumu JSON</span>
+        <span class="t-url">localhost:8000/health</span>
+      </a>
+      <a href="/metrics" target="_blank" class="tool-card">
+        <span class="t-icon">📊</span>
+        <span class="t-name">Prometheus</span>
+        <span class="t-desc">Raw Prometheus metrikleri</span>
+        <span class="t-url">localhost:8000/metrics</span>
+      </a>
+      <a href="/urls/list" target="_blank" class="tool-card">
+        <span class="t-icon">📋</span>
+        <span class="t-name">URL List API</span>
+        <span class="t-desc">Tüm URL'ler JSON olarak</span>
+        <span class="t-url">localhost:8000/urls/list</span>
+      </a>
+    </div>
 
-      // Protokol kontrol
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        showError('URL, http:// veya https:// ile başlamalıdır.');
-        return;
-      }
+    <div class="card-title" style="margin-bottom:14px;">📈 MONİTORİNG</div>
+    <div class="tool-grid" style="margin-bottom:28px;">
+      <a href="http://localhost:9090" target="_blank" class="tool-card" id="tool-prometheus">
+        <span class="t-icon">🔥</span>
+        <span class="t-name">Prometheus UI</span>
+        <span class="t-desc">PromQL sorguları, metrik explorer</span>
+        <span class="t-url">localhost:9090</span>
+      </a>
+      <a href="http://localhost:3000" target="_blank" class="tool-card" id="tool-grafana">
+        <span class="t-icon">📉</span>
+        <span class="t-name">Grafana</span>
+        <span class="t-desc">Dashboard — admin/admin</span>
+        <span class="t-url">localhost:3000</span>
+      </a>
+      <a href="http://localhost:16686" target="_blank" class="tool-card" id="tool-jaeger">
+        <span class="t-icon">🔭</span>
+        <span class="t-name">Jaeger Tracing</span>
+        <span class="t-desc">Distributed trace görüntüleyici</span>
+        <span class="t-url">localhost:16686</span>
+      </a>
+      <a href="http://localhost:4566" target="_blank" class="tool-card" id="tool-localstack">
+        <span class="t-icon">☁️</span>
+        <span class="t-name">LocalStack S3</span>
+        <span class="t-desc">Sahte AWS S3 endpoint'i</span>
+        <span class="t-url">localhost:4566</span>
+      </a>
+    </div>
 
-      // Yükle
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span> Kısaltılıyor...';
+    <div class="card-title" style="margin-bottom:14px;">⚙️ SERVİS DURUMU</div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <table class="url-table">
+        <thead><tr><th>SERVİS</th><th>ADRES</th><th>DURUM</th></tr></thead>
+        <tbody id="service-status-table">
+          <tr><td colspan="3" class="empty-state pulse">Kontrol ediliyor...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-      try {
-        const res = await fetch(`${API_BASE}/shorten`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ original_url: url })
-        });
+</div><!-- /main-wrap -->
 
-        const data = await res.json();
+<script>
+const API = '';
+let lastCreated = 0;
 
-        if (!res.ok) {
-          throw new Error(data.detail || 'Bir hata oluştu.');
-        }
+// ── NAVIGATION ──────────────────────────────────────────
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  btn.classList.add('active');
 
-        showResult(data);
-        input.value = '';
-        loadUrls();
+  const titles = { home:'🏠 Ana Sayfa', urls:'🔗 URL Yönetimi', metrics:'📊 Metrikler', tools:'🛠 Servisler & Araçlar' };
+  document.getElementById('topbar-title').textContent = titles[name] || name;
 
-      } catch (err) {
-        showError(err.message);
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Kısalt';
-      }
-    }
+  if (name === 'urls')    loadUrls('url-list-full');
+  if (name === 'metrics') loadMetrics();
+  if (name === 'tools')   checkServices();
+}
 
-    // ── SONUÇ GÖSTER ──────────────────────────────────────
-    function showResult(data) {
-      document.getElementById('result-short-url').value = data.short_url;
-      document.getElementById('meta-code').textContent   = data.short_code;
-      document.getElementById('meta-clicks').textContent = data.click_count;
-      document.getElementById('meta-created').textContent =
-        new Date(data.created_at).toLocaleString('tr-TR');
+// ── SHORTEN (Home) ───────────────────────────────────────
+async function shortenUrl() {
+  await _shorten('url-input', 'err-msg', 'shorten-btn', true);
+}
+async function shortenUrl2() {
+  await _shorten('url-input-2', 'err-msg-2', null, false);
+  loadUrls('url-list-full');
+}
+
+async function _shorten(inputId, errId, btnId, showResult) {
+  const input  = document.getElementById(inputId);
+  const errEl  = document.getElementById(errId);
+  const url    = input.value.trim();
+
+  input.classList.remove('err');
+  errEl.style.display = 'none';
+
+  if (!url) return showErr(input, errEl, 'Lütfen bir URL girin.');
+  if (!url.startsWith('http://') && !url.startsWith('https://'))
+    return showErr(input, errEl, 'URL http:// veya https:// ile başlamalıdır.');
+
+  const btn = btnId ? document.getElementById(btnId) : null;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Kısaltılıyor...'; }
+
+  try {
+    const res  = await fetch(`${API}/shorten`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ original_url: url })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Hata oluştu');
+
+    if (showResult) {
+      document.getElementById('result-url').value      = data.short_url;
+      document.getElementById('m-code').textContent    = data.short_code;
+      document.getElementById('m-clicks').textContent  = data.click_count;
+      document.getElementById('m-date').textContent    = fmtDate(data.created_at);
       document.getElementById('result-box').style.display = 'block';
     }
 
-    // ── HATA GÖSTER ──────────────────────────────────────
-    function showError(msg) {
-      const input = document.getElementById('url-input');
-      const errEl = document.getElementById('error-msg');
-      input.classList.add('error');
-      errEl.textContent    = '⚠️ ' + msg;
-      errEl.style.display  = 'block';
+    input.value = '';
+    loadUrls('home-list');
+    loadTopStats();
+  } catch(e) {
+    showErr(input, errEl, e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Kısalt'; }
+  }
+}
+
+function showErr(input, errEl, msg) {
+  input.classList.add('err');
+  errEl.textContent = '⚠️ ' + msg;
+  errEl.style.display = 'block';
+}
+
+function copyUrl() {
+  const url = document.getElementById('result-url').value;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = event.target;
+    btn.textContent = '✓ Kopyalandı!';
+    setTimeout(() => btn.textContent = 'Kopyala', 2000);
+  });
+}
+
+function openUrl() {
+  window.open(document.getElementById('result-url').value, '_blank');
+}
+
+// ── LOAD URLs ────────────────────────────────────────────
+async function loadUrls(tableId) {
+  const tbody = document.getElementById(tableId);
+  tbody.innerHTML = '<tr><td colspan="6" class="empty-state pulse">Yükleniyor...</td></tr>';
+
+  try {
+    const res  = await fetch(`${API}/urls/list?limit=50`);
+    const urls = await res.json();
+
+    if (!urls.length) {
+      tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Henüz URL yok. İlkini oluştur!</td></tr>';
+      return;
     }
 
-    // ── KOPYALA ──────────────────────────────────────────
-    function copyUrl() {
-      const shortUrl = document.getElementById('result-short-url').value;
-      navigator.clipboard.writeText(shortUrl).then(() => {
-        const btn = document.getElementById('copy-btn');
-        btn.textContent = '✓ Kopyalandı!';
-        setTimeout(() => { btn.textContent = 'Kopyala'; }, 2000);
-      });
+    const full = tableId === 'url-list-full';
+    tbody.innerHTML = urls.map(u => `
+      <tr id="row-${tableId}-${u.short_code}">
+        <td><span class="code-badge">${u.short_code}</span></td>
+        <td><span class="url-orig" title="${u.original_url}">${u.original_url}</span></td>
+        ${full ? `<td><a href="${u.short_url}" target="_blank" style="color:var(--accent2);font-size:.8rem;font-family:'JetBrains Mono',monospace;">${u.short_url}</a></td>` : ''}
+        <td><span class="click-badge">${u.click_count}</span></td>
+        <td style="color:var(--muted);font-size:.78rem;">${fmtDate(u.created_at)}</td>
+        <td>
+          <button class="btn btn-danger" onclick="deleteUrl('${u.short_code}','${tableId}')">🗑 Sil</button>
+        </td>
+      </tr>
+    `).join('');
+
+    loadTopStats(urls);
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color:var(--red)">Hata: ${e.message}</td></tr>`;
+  }
+}
+
+// ── DELETE ───────────────────────────────────────────────
+async function deleteUrl(code, tableId) {
+  if (!confirm(`"${code}" kodunu silmek istediğinizden emin misiniz?`)) return;
+  const res = await fetch(`${API}/urls/${code}`, { method: 'DELETE' });
+  if (res.ok) {
+    document.getElementById(`row-${tableId}-${code}`)?.remove();
+    loadTopStats();
+  }
+}
+
+// ── TOP STATS ────────────────────────────────────────────
+async function loadTopStats(urls) {
+  if (!urls) {
+    try {
+      const res = await fetch(`${API}/urls/list?limit=1000`);
+      urls = await res.json();
+    } catch { urls = []; }
+  }
+  const total   = urls.length;
+  const clicks  = urls.reduce((a, u) => a + u.click_count, 0);
+
+  document.getElementById('pill-urls').textContent    = total;
+  document.getElementById('pill-clicks').textContent  = clicks;
+  document.getElementById('hm-urls').textContent      = total;
+  document.getElementById('hm-clicks').textContent    = clicks;
+
+  // Son 1 dakikada oluşturulan
+  const now = Date.now();
+  const recent = urls.filter(u => {
+    const d = new Date(u.created_at + 'Z');
+    return (now - d.getTime()) < 60000;
+  }).length;
+  document.getElementById('hm-created').textContent = recent > 0 ? `+${recent}` : '0';
+}
+
+// ── HEALTH ───────────────────────────────────────────────
+async function checkHealth() {
+  const dot   = document.getElementById('sidebar-health');
+  const pill  = document.getElementById('pill-health');
+  const hmEl  = document.getElementById('hm-health');
+
+  try {
+    const res  = await fetch(`${API}/health`);
+    const data = await res.json();
+    dot.className  = 'health-dot ok';
+    pill.innerHTML = '<span class="badge-ok">✅ Sağlıklı</span>';
+    if (hmEl) { hmEl.textContent = 'Sağlıklı'; hmEl.style.color = 'var(--green)'; }
+
+    // Health details
+    const hd = document.getElementById('health-details');
+    if (hd) {
+      hd.innerHTML = `
+        <div class="metric-row"><span class="metric-key">status</span><span class="metric-value" style="color:var(--green)">${data.status}</span></div>
+        <div class="metric-row"><span class="metric-key">version</span><span class="metric-value">${data.version || '1.0.0'}</span></div>
+        <div class="metric-row"><span class="metric-key">message</span><span class="metric-value" style="font-family:inherit;font-size:.82rem">${data.message || '—'}</span></div>
+        <div class="metric-row"><span class="metric-key">uptime</span><span class="metric-value" style="color:var(--accent2)">${new Date().toLocaleTimeString('tr-TR')}</span></div>
+      `;
+    }
+  } catch {
+    dot.className  = 'health-dot err';
+    pill.innerHTML = '<span class="badge-err">❌ Çevrimdışı</span>';
+    if (hmEl) { hmEl.textContent = 'Çevrimdışı'; hmEl.style.color = 'var(--red)'; }
+  }
+}
+
+// ── PROMETHEUS METRİKLER ─────────────────────────────────
+async function loadMetrics() {
+  try {
+    const res  = await fetch(`${API}/metrics`);
+    const text = await res.text();
+
+    // Raw göster
+    const raw = document.getElementById('raw-metrics');
+    if (raw) { raw.textContent = text.split('\n').filter(l=>!l.startsWith('#')).filter(Boolean).join('\n'); raw.classList.remove('pulse'); }
+
+    // Parse et
+    const parsed = parsePrometheus(text);
+
+    const pmC = document.getElementById('pm-created');
+    const pmR = document.getElementById('pm-redirects');
+    const pmA = document.getElementById('pm-active');
+    const pm4 = document.getElementById('pm-404');
+
+    if (pmC) pmC.textContent = fmtNum(parsed['url_shortener_urls_created_total'] || 0);
+    if (pmR) pmR.textContent = fmtNum(parsed['url_shortener_redirects_total']    || 0);
+    if (pmA) pmA.textContent = fmtNum(parsed['url_shortener_active_urls']        || 0);
+    if (pm4) pm4.textContent = fmtNum(parsed['url_shortener_not_found_total']    || 0);
+
+    // Parsed table
+    const pm = document.getElementById('parsed-metrics');
+    if (pm) {
+      const keys = Object.keys(parsed).filter(k => !k.includes('_bucket') && !k.includes('_sum') && !k.includes('_count') || k.endsWith('_total'));
+      pm.innerHTML = keys.length ? keys.map(k => `
+        <div class="metric-row">
+          <span class="metric-key" style="font-size:.72rem">${k}</span>
+          <span class="metric-value">${fmtNum(parsed[k])}</span>
+        </div>
+      `).join('') : '<div class="empty-state">Metrik bulunamadı</div>';
     }
 
-    // ── URL LİSTESİ ──────────────────────────────────────
-    async function loadUrls() {
-      const listEl = document.getElementById('url-list');
-      listEl.innerHTML = '<div class="empty-state">Yükleniyor...</div>';
+  } catch(e) {
+    const raw = document.getElementById('raw-metrics');
+    if (raw) { raw.textContent = 'Hata: ' + e.message + '\n\n/metrics endpoint\'i kontrol edin.'; }
+  }
+}
 
-      try {
-        const res  = await fetch(`${API_BASE}/urls/list?limit=20`);
-        const urls = await res.json();
+function parsePrometheus(text) {
+  const result = {};
+  text.split('\n').forEach(line => {
+    if (line.startsWith('#') || !line.trim()) return;
+    const m = line.match(/^([a-zA-Z_:][a-zA-Z0-9_:]*)\s+([\d.e+\-]+)/);
+    if (m) result[m[1]] = parseFloat(m[2]);
+  });
+  return result;
+}
 
-        if (!urls.length) {
-          listEl.innerHTML = '<div class="empty-state">Henüz kısa URL oluşturulmadı.</div>';
-          return;
-        }
+// ── SERVİS DURUMU ────────────────────────────────────────
+async function checkServices() {
+  const services = [
+    { name: 'FastAPI App',     url: 'http://localhost:8000/health',   label: 'localhost:8000' },
+    { name: 'Prometheus',      url: 'http://localhost:9090/-/healthy', label: 'localhost:9090' },
+    { name: 'Grafana',         url: 'http://localhost:3000/api/health',label: 'localhost:3000' },
+    { name: 'LocalStack S3',   url: 'http://localhost:4566/_localstack/health', label: 'localhost:4566' },
+    { name: 'Jaeger UI',       url: 'http://localhost:16686',         label: 'localhost:16686' },
+  ];
 
-        listEl.innerHTML = urls.map(u => `
-          <div class="url-item" id="item-${u.short_code}">
-            <span class="url-item-code">${u.short_code}</span>
-            <span class="url-item-original" title="${u.original_url}">${u.original_url}</span>
-            <span class="url-item-clicks"><span>${u.click_count}</span> tık</span>
-            <button
-              class="url-item-delete"
-              onclick="deleteUrl('${u.short_code}')"
-              title="Sil"
-              aria-label="${u.short_code} kodunu sil"
-            >🗑</button>
-          </div>
-        `).join('');
+  const tbody = document.getElementById('service-status-table');
+  tbody.innerHTML = services.map(s => `
+    <tr>
+      <td style="font-weight:500">${s.name}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--muted)">${s.label}</td>
+      <td><span class="badge-warn pulse" id="svc-${s.name.replace(/\s/g,'')}">⏳ Kontrol...</span></td>
+    </tr>
+  `).join('');
 
-      } catch (err) {
-        listEl.innerHTML = `<div class="empty-state" style="color: var(--error)">
-          Yükleme hatası: ${err.message}
-        </div>`;
-      }
+  for (const s of services) {
+    const id = 'svc-' + s.name.replace(/\s/g,'');
+    try {
+      const res = await fetch(s.url, { signal: AbortSignal.timeout(2500) });
+      document.getElementById(id).outerHTML =
+        `<span class="badge-ok" id="${id}">✅ Çalışıyor</span>`;
+    } catch {
+      document.getElementById(id).outerHTML =
+        `<span class="badge-err" id="${id}">❌ Çevrimdışı</span>`;
     }
+  }
+}
 
-    // ── SİL ──────────────────────────────────────────────
-    async function deleteUrl(shortCode) {
-      if (!confirm(`"${shortCode}" kodunu silmek istediğinizden emin misiniz?`)) return;
+// ── YARDIMCILAR ──────────────────────────────────────────
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d.includes('Z') ? d : d + 'Z').toLocaleString('tr-TR', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+}
 
-      try {
-        const res = await fetch(`${API_BASE}/urls/${shortCode}`, { method: 'DELETE' });
-        if (res.ok) {
-          document.getElementById(`item-${shortCode}`)?.remove();
-          if (!document.querySelectorAll('.url-item').length) {
-            document.getElementById('url-list').innerHTML =
-              '<div class="empty-state">Henüz kısa URL oluşturulmadı.</div>';
-          }
-        }
-      } catch (err) {
-        alert('Silme sırasında hata: ' + err.message);
-      }
-    }
+function fmtNum(n) {
+  if (n === undefined || n === null) return '—';
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return Math.floor(n).toString();
+}
 
-    // ── ENTER İLE GÖNDER ──────────────────────────────────
-    document.getElementById('url-input').addEventListener('keydown', e => {
-      if (e.key === 'Enter') shortenUrl();
-    });
+// ── Enter key ────────────────────────────────────────────
+document.getElementById('url-input').addEventListener('keydown', e => { if(e.key==='Enter') shortenUrl(); });
 
-    // ── İLK YÜKLEME ──────────────────────────────────────
-    loadUrls();
-  </script>
+// ── İLK YÜKLEME ─────────────────────────────────────────
+checkHealth();
+loadUrls('home-list');
+loadTopStats();
+
+// Otomatik yenile (30s)
+setInterval(() => {
+  checkHealth();
+  loadTopStats();
+  if (document.getElementById('page-metrics').classList.contains('active')) loadMetrics();
+}, 30000);
+</script>
 </body>
 </html>

@@ -325,3 +325,44 @@ class TestDeleteEndpoint:
         """Olmayan URL silme → 404 dönmeli."""
         response = client.delete("/urls/yok999")
         assert response.status_code == 404
+
+
+# ─────────────────────────────────────────────────────────
+# FACTORY BOY İLE ENTEGRASYON TESTLERİ
+# Şartname: "Factory Boy + Faker ile en az 1 model factory"
+# ─────────────────────────────────────────────────────────
+
+class TestWithFactoryBoy:
+    """
+    Factory Boy kullanarak oluşturulan test verileriyle entegrasyon testleri.
+    
+    URLFactory ve ClickFactory gerçekçi, rastgele test verisi üretir.
+    Bu yaklaşım birim test verilerini daha güvenilir ve bakımı kolay yapar.
+    """
+
+    def test_factory_creates_url_with_valid_short_code(self, factory_url, client):
+        """Factory ile oluşturulan URL veritabanında doğrulanabilmeli."""
+        # factory_url fixture'ı zaten DB'ye kaydetmiş
+        response = client.get(f"/urls/{factory_url.short_code}")
+        assert response.status_code == 200
+        assert response.json()["short_code"] == factory_url.short_code
+
+    def test_factory_url_has_realistic_original_url(self, factory_url):
+        """Factory Faker ile gerçekçi URL üretmeli (https:// ile başlamalı)."""
+        assert factory_url.original_url.startswith("https://")
+
+    def test_factory_batch_creates_multiple_urls(self, factory_urls, client):
+        """Factory batch ile 5 URL oluşturulabilmeli."""
+        assert len(factory_urls) == 5
+        response = client.get("/urls/list?limit=100")
+        assert len(response.json()) >= 5
+
+    def test_factory_url_click_count_in_valid_range(self, factory_url):
+        """Factory'nin ürettiği click_count 0-50 aralığında olmalı."""
+        assert 0 <= factory_url.click_count <= 50
+
+    def test_factory_each_url_has_unique_short_code(self, factory_urls):
+        """Factory batch ile üretilen her URL benzersiz short_code'a sahip olmalı."""
+        codes = [u.short_code for u in factory_urls]
+        assert len(codes) == len(set(codes))  # Duplicate yok
+

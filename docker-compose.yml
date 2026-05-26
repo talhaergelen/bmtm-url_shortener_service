@@ -34,7 +34,7 @@ services:
     ports:
       - "8001:8000"
     environment:
-      DATABASE_URL: sqlite:///./urlshortener.db
+      DATABASE_URL: sqlite:////tmp/urlshortener.db
       BASE_URL: http://localhost:8000
       AWS_ENDPOINT_URL: http://localstack:4566
       AWS_ACCESS_KEY_ID: test
@@ -44,8 +44,6 @@ services:
     volumes:
       # Geliştirme kolaylığı: Kod değişikliklerini yansıt
       - ./src:/app/src:ro
-      # Veritabanını kalıcı yap
-      - db_data:/app
     depends_on:
       localstack:
         condition: service_healthy
@@ -71,9 +69,9 @@ services:
     environment:
       SERVICES: s3              # Sadece S3 servisini başlat
       DEBUG: 0
-      DATA_DIR: /tmp/localstack/data
+      DATA_DIR: /var/lib/localstack
     volumes:
-      - localstack_data:/tmp/localstack
+      - localstack_data:/var/lib/localstack
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
       interval: 10s
@@ -124,6 +122,27 @@ services:
       - url-shortener-net
     depends_on:
       - prometheus
+
+  # ── JAEGER (DISTRIBUTED TRACING) ──────────────────────
+  # Jaeger nedir?
+  #   OpenTelemetry trace'lerini görselleştiren açık kaynak araç.
+  #   Bir isteğin uygulamada nasıl aktığını (FastAPI → DB → S3) gösterir.
+  #
+  # UI: http://localhost:16686
+  # OTLP HTTP: http://localhost:4318 (uygulamadan trace alır)
+  jaeger:
+    image: jaegertracing/all-in-one:1.53
+    container_name: url-shortener-jaeger
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4317:4317"     # OTLP gRPC
+      - "4318:4318"     # OTLP HTTP (uygulama buraya gönderir)
+      - "14268:14268"   # Jaeger HTTP collector
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    networks:
+      - url-shortener-net
+
 
 # ── KALICI VERİ HACİMLERİ ─────────────────────────────────
 # Volume nedir?

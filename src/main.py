@@ -28,6 +28,7 @@ HTTP Metodları:
 
 import time
 import logging
+from typing import List
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.responses import RedirectResponse, Response, HTMLResponse
@@ -47,6 +48,7 @@ from .metrics import (
     ACTIVE_URLS_GAUGE
 )
 from .aws_client import ensure_bucket_exists, upload_stats_to_s3
+from .tracing import setup_tracing, instrument_fastapi
 
 # Logger — uygulama günlüğü (log kayıtları)
 logger = logging.getLogger(__name__)
@@ -72,8 +74,7 @@ async def lifespan(app: FastAPI):
     # Başlatma
     logger.info("🚀 URL Shortener Service başlatılıyor...")
 
-    # Veritabanı tablolarını oluştur (yoksa)
-    # Bu "CREATE TABLE IF NOT EXISTS" SQL komutu gibi çalışır
+    # Veritabanı tablolarını oluştur
     models.Base.metadata.create_all(bind=engine)
     logger.info("✅ Veritabanı tabloları hazır")
 
@@ -109,6 +110,14 @@ app = FastAPI(
 # Static dosyaları sun (HTML arayüzü)
 import os as _os
 _static_dir = _os.path.join(_os.path.dirname(__file__), "static")
+
+# OpenTelemetry — FastAPI instrumentation (app yaratıldıktan hemen sonra)
+try:
+    setup_tracing(db_engine=engine)
+    instrument_fastapi(app)
+except Exception as e:
+    logger.warning(f"⚠️  OTel başlatılamadı: {e}")
+
 if _os.path.exists(_static_dir):
     app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
@@ -242,6 +251,27 @@ def create_short_url(
         raise HTTPException(status_code=422, detail=str(e))
 
 
+# ─────────────────────────────────────────────────────────
+# PROMETHEUS METRİKLERİ ENDPOINT'İ
+# ÖNEMLI: Bu route /{short_code}'dan ÖNCE tanımlanmalı!
+# ─────────────────────────────────────────────────────────
+
+@app.get("/metrics", tags=["Sistem"])
+def prometheus_metrics():
+    """
+    Prometheus Metrikleri
+
+    Prometheus bu endpoint'i düzenli aralıklarla çeker (scrape eder).
+    Dönen veri düz metin formatındadır (PromQL formatı).
+    
+    ⚠️ Bu route /{short_code}'dan ÖNCE olmalı, aksi halde catch-all tarafından yakalanır!
+    """
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST
+    )
+
+
 @app.get("/{short_code}", tags=["URL"])
 def redirect_to_url(short_code: str, db: Session = Depends(get_db)):
     """
@@ -278,7 +308,7 @@ def redirect_to_url(short_code: str, db: Session = Depends(get_db)):
     return RedirectResponse(url=db_url.original_url, status_code=301)
 
 
-@app.get("/urls/list", response_model=list[schemas.URLResponse], tags=["URL"])
+@app.get("/urls/list", response_model=List[schemas.URLResponse], tags=["URL"])
 def list_urls(
     skip: int = 0,
     limit: int = 100,
@@ -388,21 +418,3 @@ def delete_url(short_code: str, db: Session = Depends(get_db)):
     ACTIVE_URLS_GAUGE.set(crud.get_url_count(db))
 
     return {"message": f"'{short_code}' başarıyla silindi"}
-
-
-# ─────────────────────────────────────────────────────────
-# PROMETHEUS METRİKLERİ ENDPOINT'İ
-# ─────────────────────────────────────────────────────────
-
-@app.get("/metrics", tags=["Sistem"])
-def prometheus_metrics():
-    """
-    Prometheus Metrikleri
-    
-    Prometheus bu endpoint'i düzenli aralıklarla çeker (scrape eder).
-    Dönen veri düz metin formatındadır (PromQL formatı).
-    """
-    return Response(
-        content=generate_latest(),
-        media_type=CONTENT_TYPE_LATEST
-    )

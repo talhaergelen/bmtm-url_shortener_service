@@ -154,3 +154,35 @@ def multiple_urls(db_session):
         urls.append(url)
     
     return urls
+
+
+# ─────────────────────────────────────────────────────────
+# FACTORY BOY FİXTURE'LARI
+# ─────────────────────────────────────────────────────────
+
+@pytest.fixture
+def url_factory(db_session):
+    """
+    URLFactory'yi test session'ı ile yapılandırır.
+    
+    Kullanım:
+        def test_something(url_factory):
+            url = url_factory()           # 1 URL
+            urls = url_factory.build_batch(5)  # 5 URL
+    """
+    from tests.factories import URLFactory, configure_factories
+    configure_factories(db_session)
+    return URLFactory
+
+
+@pytest.fixture
+def factory_url(url_factory):
+    """Factory Boy ile oluşturulmuş tek bir URL fixture'ı."""
+    return url_factory.create()
+
+
+@pytest.fixture
+def factory_urls(url_factory):
+    """Factory Boy ile oluşturulmuş 5 URL fixture'ı."""
+    return url_factory.create_batch(5)
+
