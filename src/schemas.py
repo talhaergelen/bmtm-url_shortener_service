@@ -3,14 +3,14 @@ schemas.py — Pydantic Şemaları (API Veri Formatları)
 
 Bu dosya ne işe yarar?
   API'mize gelen ve giden verilerin formatını tanımlar.
-  
+
 Şema nedir?
   "Bu endpoint'e hangi veriler gelmeli, hangi veriler dönmeli?" sorusunun cevabı.
-  
+
   Örnek:
   Kullanıcı bize POST ile şunu gönderir:
     { "original_url": "https://google.com" }
-  
+
   Biz ona şunu döneriz:
     { "short_code": "abc123", "short_url": "http://localhost:8000/abc123", ... }
 
@@ -20,7 +20,8 @@ Pydantic nedir?
   Tip güvenliği sağlar (string yerine int gelirse hata verir).
 """
 
-from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import BaseModel, field_validator
+
 from datetime import datetime
 from typing import Optional, List
 
@@ -32,7 +33,7 @@ from typing import Optional, List
 class URLCreate(BaseModel):
     """
     Yeni kısa URL oluşturma isteği.
-    
+
     Kullanıcı bize sadece şunu gönderir:
       { "original_url": "https://google.com" }
     """
@@ -56,7 +57,7 @@ class URLCreate(BaseModel):
 class URLResponse(BaseModel):
     """
     URL oluşturduktan sonra kullanıcıya döneceğimiz yanıt.
-    
+
     Örnek yanıt:
     {
       "id": 1,
@@ -81,7 +82,7 @@ class URLResponse(BaseModel):
 class URLStats(BaseModel):
     """
     Bir kısa URL'nin istatistikleri.
-    
+
     Örnek:
     {
       "short_code": "abc123",

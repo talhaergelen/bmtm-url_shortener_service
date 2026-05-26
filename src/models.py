@@ -20,9 +20,9 @@ from .database import Base
 class URL(Base):
     """
     URL Tablosu
-    
+
     Her satır = 1 kısa URL kaydı
-    
+
     Örnek bir satır:
     id=1, short_code="abc123", original_url="https://google.com", click_count=42
     """
@@ -59,10 +59,10 @@ class URL(Base):
 class Click(Base):
     """
     Click (Tıklama) Tablosu
-    
+
     Her kısa URL tıklandığında buraya bir kayıt eklenir.
     Bu sayede "bu linke ne zaman tıklandı?" gibi istatistikler tutabiliriz.
-    
+
     Örnek:
     id=1, url_id=1, clicked_at=2024-01-15 10:30:00
     id=2, url_id=1, clicked_at=2024-01-15 11:45:00

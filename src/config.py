@@ -42,7 +42,6 @@ class Settings(BaseSettings):
         extra = "ignore"  # Tanımlanmamış .env değerlerini yoksay
 
 
-
 @lru_cache()  # Ayarları her seferinde yeniden okumamak için önbelleğe alır
 def get_settings() -> Settings:
     return Settings()

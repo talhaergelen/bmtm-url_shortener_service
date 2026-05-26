@@ -3,11 +3,11 @@ database.py — Veritabanı Bağlantısı
 
 Bu dosya ne işe yarar?
   Uygulamamız ile veritabanı (PostgreSQL/SQLite) arasındaki köprüdür.
-  
+
 Veritabanı nedir?
   Verileri düzenli sakladığımız yer. Tablo tablo saklarız.
   Bizim tablomuz: URL'ler
-  
+
   | id | short_code | original_url              | click_count | created_at |
   |----|------------|---------------------------|-------------|------------|
   | 1  | abc123     | https://google.com/...    | 42          | 2024-01-01 |
@@ -45,12 +45,12 @@ Base = declarative_base()
 def get_db():
     """
     FastAPI Dependency (bağımlılık) fonksiyonu.
-    
+
     Her API isteği geldiğinde çalışır:
     1. Veritabanı bağlantısı açar
     2. İsteği işler
     3. Bağlantıyı kapatır (finally bloğu)
-    
+
     Bu "context manager" (with bloğu gibi) mantığıyla çalışır.
     """
     db = SessionLocal()

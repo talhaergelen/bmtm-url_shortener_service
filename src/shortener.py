@@ -30,9 +30,9 @@ CODE_LENGTH = 6  # 6 karakterlik kısa kod
 def generate_short_code() -> str:
     """
     Rastgele 6 karakterlik kısa kod üretir.
-    
+
     Örnek çıktılar: "xK2mN9", "aBc123", "Zy7pQr"
-    
+
     secrets.choice() neden kullandık?
       random.choice() tahmin edilebilir olabilir.
       secrets.choice() kriptografik olarak güvenli rastgelelik kullanır.
@@ -43,11 +43,11 @@ def generate_short_code() -> str:
 def generate_unique_short_code(db: Session) -> str:
     """
     Veritabanında henüz kullanılmayan bir kısa kod üretir.
-    
+
     Neden benzersizlik kontrolü?
       İki farklı URL aynı kısa koda sahip olursa, hangi URL'ye gideceğimizi bilemeyiz!
       Bu yüzden her ürettiğimiz kodu veritabanında kontrol ederiz.
-    
+
     Ne kadar deneme yapar?
       Sonsuz döngü ama teorik olarak 62^6 = 56 milyar ihtimal var,
       dolması neredeyse imkansız.
@@ -64,10 +64,10 @@ def generate_unique_short_code(db: Session) -> str:
 def is_valid_url(url: str) -> bool:
     """
     Verilen string'in geçerli bir URL olup olmadığını kontrol eder.
-    
+
     Geçerli: "https://google.com", "http://example.com/path?q=1"
     Geçersiz: "merhaba", "google", "ftp://..."
-    
+
     Regex nedir?
       "Regular Expression" — metin içinde desen aramak için kullanılır.
       Örneğin: "http veya https ile başlayıp, domain adı ve devamı var mı?"

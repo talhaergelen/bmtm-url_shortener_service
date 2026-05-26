@@ -4,7 +4,7 @@ main.py — FastAPI Ana Uygulama
 Bu dosya ne işe yarar?
   TÜM API endpoint'lerini (URL'leri) tanımlar.
   Bu dosya uygulamanın "kalbi"dir.
-  
+
 FastAPI nedir?
   Python ile hızlı web API'leri yazmak için framework (çerçeve).
   Sen Python fonksiyonu yazarsın, o bunu web API'sine dönüştürür.
@@ -26,6 +26,7 @@ HTTP Metodları:
   PUT    → Veri güncelle
 """
 
+import os as _os
 import time
 import logging
 from typing import List
@@ -63,11 +64,11 @@ settings = get_settings()
 async def lifespan(app: FastAPI):
     """
     Uygulama başlarken ve kapanırken çalışır.
-    
+
     Başlarken:
     - Veritabanı tablolarını oluştur
     - S3 bucket'ı hazırla
-    
+
     Kapanırken:
     - Temizlik yap
     """
@@ -95,20 +96,23 @@ app = FastAPI(
     title="URL Shortener Service",
     description="""
     ## 🔗 URL Kısaltma Servisi
-    
+
     Bu API ile:
     - Uzun URL'leri kısa kodlara dönüştürebilirsiniz
     - Kısa kodları kullanarak orijinal URL'ye yönlenebilirsiniz
     - Her kısa URL'nin kaç kez tıklandığını görebilirsiniz
-    
+
     **Konu #1: URL Shortener Service** — Bulut Mimarilerinde Test Mühendisliği Dönem Projesi
     """,
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    # ReDoc ve Swagger UI — CDN yerine unpkg kullan (daha güvenilir)
+    redoc_js_url="https://unpkg.com/redoc@latest/bundles/redoc.standalone.js",
+    swagger_ui_parameters={"persistAuthorization": True},
 )
 
+
 # Static dosyaları sun (HTML arayüzü)
-import os as _os
 _static_dir = _os.path.join(_os.path.dirname(__file__), "static")
 
 # OpenTelemetry — FastAPI instrumentation (app yaratıldıktan hemen sonra)
@@ -152,7 +156,7 @@ async def metrics_middleware(request: Request, call_next):
     """
     Middleware nedir?
       Her HTTP isteği gelmeden önce ve yanıt gitmeden sonra çalışan kod.
-      
+
     Bu middleware ne yapıyor?
       Her isteğin ne kadar sürdüğünü ölçüyor ve Prometheus'a kaydediyor.
       Stopwatch gibi: istek geldi → timer başlat → yanıt gönderildi → timer durdur.
@@ -180,12 +184,12 @@ async def metrics_middleware(request: Request, call_next):
 def health_check():
     """
     Sağlık Kontrolü Endpoint'i
-    
+
     Ne işe yarar?
       "Uygulama çalışıyor mu?" sorusuna cevap verir.
       Kubernetes bu endpoint'i kullanarak uygulamanın sağlıklı olup olmadığını kontrol eder.
       GitHub Actions smoke test olarak bu endpoint'i çağırır.
-    
+
     Örnek yanıt:
       { "status": "healthy", "message": "URL Shortener çalışıyor", "version": "1.0.0" }
     """
@@ -203,14 +207,14 @@ def create_short_url(
 ):
     """
     Yeni Kısa URL Oluştur
-    
+
     Kullanım:
       POST /shorten
       Body: { "original_url": "https://google.com" }
-    
+
     Yanıt:
       { "short_code": "abc123", "short_url": "http://localhost:8000/abc123", ... }
-    
+
     Depends(get_db) nedir?
       FastAPI'nin dependency injection özelliği.
       "Bu endpoint için bir veritabanı bağlantısı lazım" der.
@@ -263,7 +267,7 @@ def prometheus_metrics():
 
     Prometheus bu endpoint'i düzenli aralıklarla çeker (scrape eder).
     Dönen veri düz metin formatındadır (PromQL formatı).
-    
+
     ⚠️ Bu route /{short_code}'dan ÖNCE olmalı, aksi halde catch-all tarafından yakalanır!
     """
     return Response(
@@ -276,15 +280,15 @@ def prometheus_metrics():
 def redirect_to_url(short_code: str, db: Session = Depends(get_db)):
     """
     Kısa URL'ye Yönlendir (Redirect)
-    
+
     Kullanım:
       GET /abc123
-    
+
     Ne olur?
       - "abc123" veritabanında aranır
       - Bulunursa → 301 Redirect ile orijinal URL'ye yönlendirir
       - Bulunamazsa → 404 Not Found hatası verir
-    
+
     HTTP 301 nedir?
       "Bu adres kalıcı olarak başka bir yere taşındı" demek.
       Tarayıcı otomatik olarak yeni adrese gider.
@@ -316,11 +320,11 @@ def list_urls(
 ):
     """
     Tüm Kısa URL'leri Listele
-    
+
     Kullanım:
       GET /urls/list
       GET /urls/list?skip=0&limit=10  (sayfalama için)
-    
+
     Yanıt:
       [ { "short_code": "abc123", ... }, { "short_code": "xyz789", ... }, ... ]
     """
@@ -343,10 +347,10 @@ def list_urls(
 def get_url_detail(short_code: str, db: Session = Depends(get_db)):
     """
     Belirli Bir Kısa URL'nin Detayı
-    
+
     Kullanım:
       GET /urls/abc123
-    
+
     NOT: Bu endpoint yönlendirme YAPMAZ, sadece bilgi gösterir.
          Yönlendirme için GET /abc123 kullanın.
     """
@@ -372,10 +376,10 @@ def get_url_detail(short_code: str, db: Session = Depends(get_db)):
 def get_url_stats(short_code: str, db: Session = Depends(get_db)):
     """
     URL İstatistiklerini Görüntüle
-    
+
     Kullanım:
       GET /stats/abc123
-    
+
     Yanıt:
       {
         "short_code": "abc123",
@@ -399,10 +403,10 @@ def get_url_stats(short_code: str, db: Session = Depends(get_db)):
 def delete_url(short_code: str, db: Session = Depends(get_db)):
     """
     Kısa URL'yi Sil
-    
+
     Kullanım:
       DELETE /urls/abc123
-    
+
     Yanıt:
       { "message": "abc123 başarıyla silindi" }
     """

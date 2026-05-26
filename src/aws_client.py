@@ -3,7 +3,7 @@ aws_client.py — AWS S3 İstemcisi (LocalStack ile)
 
 Bu dosya ne işe yarar?
   URL istatistiklerini AWS S3'e yazar.
-  
+
 AWS S3 nedir?
   Amazon'un bulut depolama servisi (Simple Storage Service).
   Google Drive'a benzer ama programcılar için.
@@ -24,7 +24,8 @@ import json
 import logging
 from typing import List
 from datetime import datetime
-from botocore.exceptions import ClientError, EndpointResolutionError
+from botocore.exceptions import ClientError
+
 from .config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -34,9 +35,9 @@ settings = get_settings()
 def get_s3_client():
     """
     S3 istemcisi oluşturur.
-    
+
     endpoint_url neden var?
-      Normalde AWS'ye bağlanır. 
+      Normalde AWS'ye bağlanır.
       endpoint_url=http://localhost:4566 ile LocalStack'e bağlanır.
     """
     from botocore.config import Config
@@ -57,11 +58,11 @@ def get_s3_client():
 def ensure_bucket_exists() -> bool:
     """
     S3 bucket (klasör gibi) yoksa oluşturur.
-    
+
     Bucket nedir?
       S3'te dosyaların saklandığı "konteyner".
       Google Drive'daki bir klasör gibi düşünebilirsin.
-    
+
     Returns:
         True → Başarılı
         False → LocalStack çalışmıyor (hata)
@@ -92,14 +93,14 @@ def ensure_bucket_exists() -> bool:
 def upload_stats_to_s3(stats: dict) -> bool:
     """
     İstatistikleri JSON olarak S3'e yükler.
-    
+
     Args:
         stats: Yüklenecek istatistik verisi (Python dict)
-    
+
     Returns:
         True → Başarıyla yüklendi
         False → Hata oluştu (LocalStack çalışmıyor olabilir)
-    
+
     Örnek stats:
     {
       "date": "2024-01-15",
@@ -137,10 +138,10 @@ def upload_stats_to_s3(stats: dict) -> bool:
 def get_stats_from_s3(date: str) -> List[dict]:
     """
     Belirli bir tarihe ait istatistikleri S3'ten çeker.
-    
+
     Args:
         date: "2024-01-15" formatında tarih
-    
+
     Returns:
         İstatistik listesi
     """

@@ -19,7 +19,8 @@ Metrik türleri:
   Histogram → Dağılım ölçer (yanıt süresi dağılımı gibi)
 """
 
-from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import Counter, Histogram, Gauge
+
 
 # ─────────────────────────────────────────────────────────
 # SAYAÇLAR (COUNTER) — Sadece artabilir
