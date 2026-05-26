@@ -46,6 +46,9 @@ COPY src/ ./src/
 # .env varsa kopyala (yoksa build bozulmasın)
 COPY requirements.txt .
 
+# appuser'ın veritabanı dosyasını (/app/urlshortener.db) oluşturabilmesi için izin ver
+RUN chown -R appuser:appuser /app
+
 # Kullanıcıya geç
 USER appuser
 
