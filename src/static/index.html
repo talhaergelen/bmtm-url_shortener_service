@@ -984,7 +984,7 @@ async function checkServices() {
   for (const s of services) {
     const id = 'svc-' + s.name.replace(/\s/g,'');
     try {
-      const res = await fetch(s.url, { signal: AbortSignal.timeout(2500) });
+      await fetch(s.url, { mode: 'no-cors', signal: AbortSignal.timeout(2500) });
       document.getElementById(id).outerHTML =
         `<span class="badge-ok" id="${id}">✅ Çalışıyor</span>`;
     } catch {
