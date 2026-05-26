@@ -95,7 +95,7 @@ jobs:
       # Pytest çalıştır
       - name: Pytest Çalıştır
         run: |
-          pytest tests/unit/ tests/integration/ \
+          PYTHONPATH=. pytest tests/unit/ tests/integration/ \
             --cov=src \
             --cov-fail-under=70 \
             --cov-report=xml \
@@ -376,7 +376,7 @@ jobs:
       # E2E testleri çalıştır
       - name: E2E Playwright Testleri
         run: |
-          pytest tests/e2e/ \
+          PYTHONPATH=. pytest tests/e2e/ \
             -v \
             --tb=short \
             --timeout=60
