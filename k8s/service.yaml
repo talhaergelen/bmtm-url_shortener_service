@@ -1,0 +1,42 @@
+# Service — Uygulamaya Ağ Erişimi
+#
+# Service nedir?
+#   Pod'lara tek bir IP/port üzerinden erişim sağlar.
+#   Pod'lar yeniden başlasa da IP değişse de Service sabit kalır.
+#
+# NodePort nedir?
+#   Kubernetes node'unun belirli bir portunu dışarıya açar.
+#   Minikube'de: minikube service url-shortener-service --url
+#
+# Service türleri:
+#   ClusterIP  → Sadece cluster içinden erişilir
+#   NodePort   → Node'un IP'si üzerinden dışarıdan erişilir
+#   LoadBalancer → Bulut sağlayıcısı load balancer oluşturur
+#
+# Kullanım:
+#   kubectl apply -f k8s/service.yaml
+#   kubectl get services
+#   minikube service url-shortener-service --url
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: url-shortener-service
+  namespace: default
+  labels:
+    app: url-shortener
+spec:
+  # Hangi pod'ları bu Service yönetsin? (Deployment ile aynı etiket)
+  selector:
+    app: url-shortener
+
+  # Tür: NodePort — Minikube'de dışarıdan erişmek için
+  type: NodePort
+
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8000        # Service'in portu (cluster içi)
+      targetPort: 8000  # Container'ın portu
+      nodePort: 30080   # Node'un dışa açılan portu (30000-32767 arası)
+      # Erişim: http://<minikube-ip>:30080

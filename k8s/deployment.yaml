@@ -1,0 +1,99 @@
+# Deployment — Uygulama Pod'larının Tanımı
+#
+# Deployment nedir?
+#   Kubernetes'e "bu uygulamadan kaç kopya çalıştır, nasıl çalıştır" der.
+#
+# Pod nedir?
+#   Kubernetes'te çalışan en küçük birim. İçinde 1 veya daha fazla container var.
+#
+# replicas: 2 ne anlama gelir?
+#   2 kopya çalış. Biri çökerse diğeri hizmet vermeye devam eder.
+#   Yüksek erişilebilirlik (High Availability) sağlar.
+#
+# Kullanım:
+#   kubectl apply -f k8s/deployment.yaml
+#   kubectl get deployments
+#   kubectl get pods
+#   kubectl describe pod <pod-adı>
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: url-shortener
+  namespace: default
+  labels:
+    app: url-shortener
+    version: "1.0.0"
+spec:
+  # Kaç kopya çalıştır
+  replicas: 2
+
+  # Hangi pod'ları bu Deployment yönetir? (etiket seçici)
+  selector:
+    matchLabels:
+      app: url-shortener
+
+  # Güncelleme stratejisi
+  # RollingUpdate: Kademeli güncelleme — önce yeni başlat, sonra eskiyi kapat
+  # Bu sayede güncelleme sırasında uygulama çalışmaya devam eder
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Geçici olarak 1 fazla pod açılabilir
+      maxUnavailable: 0  # Güncelleme sırasında hiç pod kapatma
+
+  # Pod şablonu
+  template:
+    metadata:
+      labels:
+        app: url-shortener
+    spec:
+      containers:
+        - name: url-shortener
+          # image: Kullanılacak Docker image'ı
+          # Minikube ile çalışmak için: minikube image build . -t url-shortener:latest
+          image: url-shortener:latest
+          
+          # Minikube yerel image kullandığımızda pull etmeye çalışma
+          imagePullPolicy: IfNotPresent
+          
+          # Container portu
+          ports:
+            - containerPort: 8000
+              name: http
+
+          # Ortam değişkenlerini ConfigMap'ten al
+          envFrom:
+            - configMapRef:
+                name: url-shortener-config
+
+          # Kaynak limitleri
+          # requests: "En az bu kadar kaynak ayır"
+          # limits: "En fazla bu kadar kaynak kullanabilir"
+          resources:
+            requests:
+              memory: "128Mi"  # 128 Megabyte RAM
+              cpu: "100m"      # 100 millicpu = %10 CPU
+            limits:
+              memory: "256Mi"
+              cpu: "500m"      # %50 CPU
+
+          # Liveness Probe: "Container hâlâ çalışıyor mu?"
+          # Cevap vermezse Kubernetes container'ı yeniden başlatır
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15  # Başlangıçta 15 saniye bekle
+            periodSeconds: 30        # Her 30 saniyede bir kontrol et
+            failureThreshold: 3      # 3 başarısızlıkta restart
+
+          # Readiness Probe: "Container trafik alabilir mi?"
+          # Hazır değilse Service trafik göndermez
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3

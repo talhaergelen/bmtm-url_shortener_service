@@ -1,0 +1,54 @@
+# prometheus.yml — Prometheus Yapılandırması
+#
+# Bu dosya ne işe yarar?
+#   Prometheus'a "nereden ve ne sıklıkla veri topla?" der.
+#
+# Scrape nedir?
+#   Prometheus'un hedef uygulamadan /metrics endpoint'ini çekme işlemi.
+#   "Scrape = Çekme/Kazıma"
+#
+# Kullanım:
+#   docker-compose up prometheus
+#   http://localhost:9090 → Prometheus UI
+
+global:
+  # Varsayılan scrape aralığı: Her 15 saniyede bir veri çek
+  scrape_interval: 15s
+  
+  # Timeout: 10 saniyede cevap gelmezse vazgeç
+  scrape_timeout: 10s
+  
+  # Değerlendirme aralığı: Kuralları her 15s değerlendir
+  evaluation_interval: 15s
+
+# Uyarı kuralları dosyaları (şimdilik boş)
+rule_files: []
+
+# Scrape hedefleri — Kimlerden metrik çekecek?
+scrape_configs:
+
+  # Prometheus kendi kendini izler
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # URL Shortener Service metrikleri
+  # /metrics endpoint'inden her 15s veri çeker
+  - job_name: "url-shortener"
+    scrape_interval: 15s
+    metrics_path: "/metrics"      # Hangi path'ten çek?
+    static_configs:
+      - targets: ["app:8000"]     # docker-compose servis adı
+        labels:
+          service: "url-shortener"
+          environment: "development"
+
+  # Localhost için (direkt çalıştırma)
+  - job_name: "url-shortener-local"
+    scrape_interval: 15s
+    metrics_path: "/metrics"
+    static_configs:
+      - targets: ["host.docker.internal:8000"]  # Host makinedeki uygulama
+        labels:
+          service: "url-shortener"
+          environment: "local"

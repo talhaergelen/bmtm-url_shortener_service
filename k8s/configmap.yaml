@@ -1,0 +1,36 @@
+# ConfigMap — Uygulama Yapılandırması
+#
+# ConfigMap nedir?
+#   Kubernetes'te uygulamanın ihtiyaç duyduğu ayarları saklamak için kullanılır.
+#   Kod içine değil, dışarıda tanımlanır — böylece farklı ortamlarda (dev/prod) 
+#   aynı image farklı ayarlarla çalışabilir.
+#
+# Kullanım:
+#   kubectl apply -f k8s/configmap.yaml
+#   kubectl get configmap url-shortener-config -o yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: url-shortener-config
+  namespace: default
+  labels:
+    app: url-shortener
+    version: "1.0.0"
+data:
+  # Veritabanı bağlantı adresi
+  DATABASE_URL: "sqlite:///./urlshortener.db"
+  
+  # Kısa URL'lerin başı (Kubernetes Service adı ile)
+  BASE_URL: "http://url-shortener-service:8000"
+  
+  # LocalStack (Sahte AWS) ayarları
+  AWS_ENDPOINT_URL: "http://localstack:4566"
+  AWS_ACCESS_KEY_ID: "test"
+  AWS_SECRET_ACCESS_KEY: "test"
+  AWS_DEFAULT_REGION: "us-east-1"
+  S3_BUCKET_NAME: "url-shortener-stats"
+  
+  # Uygulama ayarları
+  APP_NAME: "URL Shortener Service"
+  DEBUG: "false"

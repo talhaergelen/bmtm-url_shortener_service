@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>URL Kısaltıcı — URL Shortener Service</title>
+  <meta name="description" content="Uzun URL'lerinizi hızlıca kısaltın. Kısa linkler oluşturun, tıklama istatistiklerini takip edin." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── DESIGN TOKENS ── */
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --border: rgba(139, 92, 246, 0.2);
+      --accent: #8b5cf6;
+      --accent2: #06b6d4;
+      --text: #f1f5f9;
+      --text-muted: #64748b;
+      --success: #10b981;
+      --error: #ef4444;
+      --radius: 12px;
+      --shadow: 0 4px 32px rgba(139, 92, 246, 0.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── ARKA PLAN GLOW ── */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(ellipse at 60% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 60%),
+                  radial-gradient(ellipse at 20% 80%, rgba(6, 182, 212, 0.06) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── HEADER ── */
+    header {
+      width: 100%;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(18, 18, 26, 0.8);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      font-size: 1.4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .badge {
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── MAIN ── */
+    main {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 680px;
+      padding: 60px 24px 40px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+
+    /* ── KART ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      transition: border-color 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(139, 92, 246, 0.4);
+    }
+
+    /* ── FORM ── */
+    .form-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    #url-input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #url-input::placeholder { color: var(--text-muted); }
+
+    #url-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    }
+
+    #url-input.error {
+      border-color: var(--error);
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+    }
+
+    #shorten-btn {
+      background: linear-gradient(135deg, var(--accent), #7c3aed);
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    #shorten-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    #shorten-btn:active { transform: translateY(0); }
+    #shorten-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ── HATA MESAJI ── */
+    #error-msg {
+      display: none;
+      color: var(--error);
+      font-size: 0.82rem;
+      margin-top: 8px;
+    }
+
+    /* ── SONUÇ KUTUSU ── */
+    #result-box {
+      display: none;
+      margin-top: 20px;
+      background: var(--surface2);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .result-url-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #result-short-url {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--success);
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: 'Courier New', monospace;
+      cursor: text;
+      outline: none;
+    }
+
+    #copy-btn {
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 6px;
+      padding: 6px 12px;
+      color: var(--success);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: inherit;
+    }
+
+    #copy-btn:hover { background: rgba(16, 185, 129, 0.2); }
+
+    .result-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .meta-key { font-size: 0.72rem; color: var(--text-muted); }
+    .meta-val { font-size: 0.85rem; font-weight: 500; }
+
+    /* ── TABLO ── */
+    .list-section {
+      margin-top: 32px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    #refresh-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 10px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    #refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    #url-list { display: flex; flex-direction: column; gap: 8px; }
+
+    .url-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: border-color 0.2s;
+    }
+
+    .url-item:hover { border-color: rgba(139, 92, 246, 0.4); }
+
+    .url-item-code {
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 0.9rem;
+      min-width: 70px;
+    }
+
+    .url-item-original {
+      flex: 1;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .url-item-clicks {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .url-item-clicks span {
+      color: var(--accent2);
+      font-weight: 600;
+    }
+
+    .url-item-delete {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.2s, background 0.2s;
+    }
+
+    .url-item-delete:hover { color: var(--error); background: rgba(239,68,68,0.08); }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      width: 100%;
+      padding: 20px 40px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      margin-top: auto;
+    }
+
+    .loading { opacity: 0.6; pointer-events: none; }
+
+    /* ── LOADING SPINNER ── */
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="logo">🔗 URL Shortener</span>
+    <span class="badge">v1.0.0</span>
+  </header>
+
+  <main>
+    <div class="hero">
+      <h1>Uzun URL'leri<br/>Kısaltın</h1>
+      <p>Hızlı, güvenli ve tıklama takipli kısa linkler oluşturun.</p>
+    </div>
+
+    <!-- KISALTMA FORMU -->
+    <div class="card">
+      <div class="form-group">
+        <input
+          type="url"
+          id="url-input"
+          placeholder="https://uzun-adresinizi-buraya-yapistirin.com/..."
+          autocomplete="off"
+          aria-label="Kısaltılacak URL"
+        />
+        <button id="shorten-btn" onclick="shortenUrl()">Kısalt</button>
+      </div>
+      <div id="error-msg" role="alert"></div>
+
+      <!-- SONUÇ KUTUSU -->
+      <div id="result-box" aria-live="polite">
+        <div class="result-label">✅ Kısa URL Oluşturuldu</div>
+        <div class="result-url-row">
+          <input type="text" id="result-short-url" readonly aria-label="Kısa URL" />
+          <button id="copy-btn" onclick="copyUrl()">Kopyala</button>
+        </div>
+        <div class="result-meta">
+          <div class="meta-item">
+            <span class="meta-key">Kısa Kod</span>
+            <span class="meta-val" id="meta-code">—</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-key">Tıklama</span>
+            <span class="meta-val" id="meta-clicks">0</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-key">Oluşturulma</span>
+            <span class="meta-val" id="meta-created">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- URL LİSTESİ -->
+    <div class="list-section">
+      <div class="section-header">
+        <span class="section-title">📋 Tüm Kısa URL'ler</span>
+        <button id="refresh-btn" onclick="loadUrls()">↻ Yenile</button>
+      </div>
+      <div id="url-list">
+        <div class="empty-state">Yükleniyor...</div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    Bulut Mimarilerinde Test Mühendisliği &mdash; Konu #1: URL Shortener Service &mdash;
+    <a href="/docs" style="color: var(--accent); text-decoration: none;">API Docs</a>
+  </footer>
+
+  <script>
+    const API_BASE = '';  // Aynı origin
+
+    // ── URL KISALTMA ──────────────────────────────────────
+    async function shortenUrl() {
+      const input = document.getElementById('url-input');
+      const btn   = document.getElementById('shorten-btn');
+      const errEl = document.getElementById('error-msg');
+      const url   = input.value.trim();
+
+      // Hata temizle
+      input.classList.remove('error');
+      errEl.style.display = 'none';
+
+      // Boş kontrol
+      if (!url) {
+        showError('Lütfen bir URL girin.');
+        return;
+      }
+
+      // Protokol kontrol
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        showError('URL, http:// veya https:// ile başlamalıdır.');
+        return;
+      }
+
+      // Yükle
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> Kısaltılıyor...';
+
+      try {
+        const res = await fetch(`${API_BASE}/shorten`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ original_url: url })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.detail || 'Bir hata oluştu.');
+        }
+
+        showResult(data);
+        input.value = '';
+        loadUrls();
+
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Kısalt';
+      }
+    }
+
+    // ── SONUÇ GÖSTER ──────────────────────────────────────
+    function showResult(data) {
+      document.getElementById('result-short-url').value = data.short_url;
+      document.getElementById('meta-code').textContent   = data.short_code;
+      document.getElementById('meta-clicks').textContent = data.click_count;
+      document.getElementById('meta-created').textContent =
+        new Date(data.created_at).toLocaleString('tr-TR');
+      document.getElementById('result-box').style.display = 'block';
+    }
+
+    // ── HATA GÖSTER ──────────────────────────────────────
+    function showError(msg) {
+      const input = document.getElementById('url-input');
+      const errEl = document.getElementById('error-msg');
+      input.classList.add('error');
+      errEl.textContent    = '⚠️ ' + msg;
+      errEl.style.display  = 'block';
+    }
+
+    // ── KOPYALA ──────────────────────────────────────────
+    function copyUrl() {
+      const shortUrl = document.getElementById('result-short-url').value;
+      navigator.clipboard.writeText(shortUrl).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.textContent = '✓ Kopyalandı!';
+        setTimeout(() => { btn.textContent = 'Kopyala'; }, 2000);
+      });
+    }
+
+    // ── URL LİSTESİ ──────────────────────────────────────
+    async function loadUrls() {
+      const listEl = document.getElementById('url-list');
+      listEl.innerHTML = '<div class="empty-state">Yükleniyor...</div>';
+
+      try {
+        const res  = await fetch(`${API_BASE}/urls/list?limit=20`);
+        const urls = await res.json();
+
+        if (!urls.length) {
+          listEl.innerHTML = '<div class="empty-state">Henüz kısa URL oluşturulmadı.</div>';
+          return;
+        }
+
+        listEl.innerHTML = urls.map(u => `
+          <div class="url-item" id="item-${u.short_code}">
+            <span class="url-item-code">${u.short_code}</span>
+            <span class="url-item-original" title="${u.original_url}">${u.original_url}</span>
+            <span class="url-item-clicks"><span>${u.click_count}</span> tık</span>
+            <button
+              class="url-item-delete"
+              onclick="deleteUrl('${u.short_code}')"
+              title="Sil"
+              aria-label="${u.short_code} kodunu sil"
+            >🗑</button>
+          </div>
+        `).join('');
+
+      } catch (err) {
+        listEl.innerHTML = `<div class="empty-state" style="color: var(--error)">
+          Yükleme hatası: ${err.message}
+        </div>`;
+      }
+    }
+
+    // ── SİL ──────────────────────────────────────────────
+    async function deleteUrl(shortCode) {
+      if (!confirm(`"${shortCode}" kodunu silmek istediğinizden emin misiniz?`)) return;
+
+      try {
+        const res = await fetch(`${API_BASE}/urls/${shortCode}`, { method: 'DELETE' });
+        if (res.ok) {
+          document.getElementById(`item-${shortCode}`)?.remove();
+          if (!document.querySelectorAll('.url-item').length) {
+            document.getElementById('url-list').innerHTML =
+              '<div class="empty-state">Henüz kısa URL oluşturulmadı.</div>';
+          }
+        }
+      } catch (err) {
+        alert('Silme sırasında hata: ' + err.message);
+      }
+    }
+
+    // ── ENTER İLE GÖNDER ──────────────────────────────────
+    document.getElementById('url-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') shortenUrl();
+    });
+
+    // ── İLK YÜKLEME ──────────────────────────────────────
+    loadUrls();
+  </script>
+</body>
+</html>

@@ -1,0 +1,266 @@
+# GitHub Actions CI/CD Pipeline
+#
+# Bu dosya ne işe yarar?
+#   Her push veya PR'da otomatik olarak çalışır.
+#   Kılavuz gereksinimi: "lint → pytest → docker build → deploy → smoke"
+#
+# GitHub Actions nedir?
+#   GitHub'un yerleşik CI/CD (Sürekli Entegrasyon/Dağıtım) sistemi.
+#   .github/workflows/ klasöründeki YAML dosyaları tetikleyicidir.
+#
+# Job nedir?
+#   Pipeline'daki bir adım grubu. Her job ayrı bir sanal makinede çalışır.
+#
+# Step nedir?
+#   Bir job içindeki tek bir işlem (komut veya action).
+#
+# Aşamalar:
+#   1. lint    → Kod kalitesi kontrolü (flake8)
+#   2. test    → Pytest + coverage ≥%70
+#   3. postman → Newman ile API testleri
+#   4. docker  → Image build et
+#   5. smoke   → /health endpoint'ini çağır
+
+name: CI/CD Pipeline — URL Shortener Service
+
+# Tetikleyiciler: Push veya Pull Request
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+
+  # ── JOB 1: LINT ───────────────────────────────────────────
+  # Kod kalitesi ve stil kontrolü
+  lint:
+    name: "🔍 Lint — Kod Kalitesi Kontrolü"
+    runs-on: ubuntu-latest
+
+    steps:
+      # Kodu indir
+      - name: Kodu İndir
+        uses: actions/checkout@v4
+
+      # Python kur
+      - name: Python Kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # flake8 kur
+      - name: flake8 Kur
+        run: pip install flake8
+
+      # Kod kalitesi kontrolü
+      # E501: Satır çok uzun (120 karakter)
+      # W503: Satır kesme (PEP8'e aykırı değil)
+      - name: flake8 Çalıştır
+        run: |
+          flake8 src/ \
+            --max-line-length=120 \
+            --extend-ignore=E501,W503,E402 \
+            --exclude=__pycache__,*.pyc
+
+
+  # ── JOB 2: TEST ───────────────────────────────────────────
+  # Pytest + coverage
+  test:
+    name: "🧪 Test — Pytest + Coverage ≥%70"
+    runs-on: ubuntu-latest
+    needs: lint  # lint başarılı olunca çalış
+
+    steps:
+      - name: Kodu İndir
+        uses: actions/checkout@v4
+
+      - name: Python Kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # Bağımlılıkları kur (requirements.txt'teki her şey)
+      - name: Bağımlılıkları Kur
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Pytest çalıştır
+      # --cov=src               → src/ klasörünün coverage'ını ölç
+      # --cov-fail-under=70     → %70 altında başarısız say
+      # --cov-report=xml        → coverage.xml oluştur (GitHub'a yüklemek için)
+      # -v                      → Verbose (ayrıntılı çıktı)
+      - name: Pytest Çalıştır
+        run: |
+          pytest tests/unit/ tests/integration/ \
+            --cov=src \
+            --cov-fail-under=70 \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            -v
+        env:
+          DATABASE_URL: sqlite:///./urlshortener.db
+          BASE_URL: http://localhost:8000
+          AWS_ENDPOINT_URL: http://localhost:4566
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_DEFAULT_REGION: us-east-1
+          S3_BUCKET_NAME: url-shortener-stats
+
+      # Coverage raporunu GitHub'a yükle (opsiyonel)
+      - name: Coverage Raporu Yükle
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+        continue-on-error: true
+
+
+  # ── JOB 3: POSTMAN/NEWMAN ─────────────────────────────────
+  # API testleri
+  postman:
+    name: "📬 Postman — Newman API Testleri"
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Kodu İndir
+        uses: actions/checkout@v4
+
+      - name: Python Kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Bağımlılıkları Kur
+        run: pip install -r requirements.txt
+
+      # Uygulamayı arka planda başlat
+      - name: Uygulamayı Başlat
+        run: |
+          python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5  # Başlamasını bekle
+        env:
+          DATABASE_URL: sqlite:///./urlshortener.db
+          BASE_URL: http://localhost:8000
+          AWS_ENDPOINT_URL: http://localhost:4566
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+
+      # Node.js kur (Newman için)
+      - name: Node.js Kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # Newman kur
+      - name: Newman Kur
+        run: npm install -g newman
+
+      # Postman koleksiyonunu çalıştır
+      - name: Newman ile API Testleri
+        run: |
+          newman run postman/collection.json \
+            --env-var "base_url=http://localhost:8000" \
+            --reporters cli \
+            --bail
+
+
+  # ── JOB 4: DOCKER BUILD ───────────────────────────────────
+  # Docker image oluştur
+  docker:
+    name: "🐳 Docker — Image Build"
+    runs-on: ubuntu-latest
+    needs: postman
+
+    steps:
+      - name: Kodu İndir
+        uses: actions/checkout@v4
+
+      # Docker Buildx kur (multi-platform build için)
+      - name: Docker Buildx Kur
+        uses: docker/setup-buildx-action@v3
+
+      # Docker image oluştur
+      # GitHub commit SHA ile etiketle — her commit farklı image
+      - name: Docker Image Build
+        run: |
+          docker build \
+            -t url-shortener:latest \
+            -t url-shortener:${{ github.sha }} \
+            .
+          echo "✅ Image boyutu:"
+          docker images url-shortener:latest --format "{{.Size}}"
+
+      # Container'ı başlat ve sağlık kontrolü yap
+      - name: Container Başlat ve Test Et
+        run: |
+          docker run -d \
+            --name test-container \
+            -p 8000:8000 \
+            -e DATABASE_URL=sqlite:///./urlshortener.db \
+            -e BASE_URL=http://localhost:8000 \
+            -e AWS_ENDPOINT_URL=http://localhost:4566 \
+            -e AWS_ACCESS_KEY_ID=test \
+            -e AWS_SECRET_ACCESS_KEY=test \
+            url-shortener:latest
+          
+          # Container'ın başlamasını bekle
+          sleep 10
+          
+          # Sağlık kontrolü
+          curl -f http://localhost:8000/health || exit 1
+          echo "✅ Container sağlıklı çalışıyor"
+
+
+  # ── JOB 5: SMOKE TEST ─────────────────────────────────────
+  # Son doğrulama
+  smoke:
+    name: "💨 Smoke Test — Son Doğrulama"
+    runs-on: ubuntu-latest
+    needs: docker
+
+    steps:
+      - name: Kodu İndir
+        uses: actions/checkout@v4
+
+      - name: Python Kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Bağımlılıkları Kur
+        run: pip install -r requirements.txt
+
+      # Uygulamayı başlat
+      - name: Uygulamayı Başlat
+        run: |
+          python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+          sleep 5
+        env:
+          DATABASE_URL: sqlite:///./urlshortener.db
+          BASE_URL: http://localhost:8000
+          AWS_ENDPOINT_URL: http://localhost:4566
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+
+      # Kritik endpointleri test et
+      - name: Smoke Testleri
+        run: |
+          echo "=== Smoke Test: /health ==="
+          curl -f http://localhost:8000/health
+          
+          echo "=== Smoke Test: POST /shorten ==="
+          RESPONSE=$(curl -s -X POST http://localhost:8000/shorten \
+            -H "Content-Type: application/json" \
+            -d '{"original_url": "https://github.com"}')
+          echo $RESPONSE
+          
+          SHORT_CODE=$(echo $RESPONSE | python3 -c "import sys,json; print(json.load(sys.stdin)['short_code'])")
+          echo "Oluşturulan kısa kod: $SHORT_CODE"
+          
+          echo "=== Smoke Test: GET /stats/$SHORT_CODE ==="
+          curl -f http://localhost:8000/stats/$SHORT_CODE
+          
+          echo "✅ Tüm smoke testler başarılı!"

@@ -1,0 +1,384 @@
+{
+  "info": {
+    "name": "URL Shortener Service",
+    "_postman_id": "url-shortener-collection-v1",
+    "description": "Bulut Mimarilerinde Test Mühendisliği — Konu #1: URL Shortener Service\nTüm API endpoint'lerini test eden Postman koleksiyonu.\nNewman ile CI/CD pipeline'da otomatik çalıştırılabilir.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string",
+      "description": "API'nin çalıştığı adres"
+    },
+    {
+      "key": "short_code",
+      "value": "",
+      "type": "string",
+      "description": "Test sırasında oluşturulan kısa kod (otomatik set edilir)"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check — Sunucu Sağlık Kontrolü",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Test 1: HTTP 200 dönmeli",
+              "pm.test('Status code 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "// Test 2: 'healthy' durumu dönmeli",
+              "pm.test('Status is healthy', function() {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.status).to.equal('healthy');",
+              "});",
+              "",
+              "// Test 3: Versiyon bilgisi var",
+              "pm.test('Version field exists', function() {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data).to.have.property('version');",
+              "});",
+              "",
+              "// Test 4: Yanıt süresi 1 saniyeden kısa",
+              "pm.test('Response time under 1000ms', function() {",
+              "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": ["{{base_url}}"],
+          "path": ["health"]
+        },
+        "description": "Sunucunun çalışıp çalışmadığını kontrol eder.\nKubernetes liveness probe ve GitHub Actions smoke test burayı kullanır."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Shorten URL — URL Kısaltma",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Test 1: HTTP 201 Created dönmeli",
+              "pm.test('Status code 201', function() {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "// Test 2: short_code alanı var ve 6 karakter",
+              "pm.test('short_code is 6 chars', function() {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.short_code).to.have.lengthOf(6);",
+              "});",
+              "",
+              "// Test 3: short_url alanı var",
+              "pm.test('short_url field exists', function() {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data).to.have.property('short_url');",
+              "    pm.expect(data.short_url).to.include('http');",
+              "});",
+              "",
+              "// Test 4: click_count 0 ile başlıyor",
+              "pm.test('click_count starts at 0', function() {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.click_count).to.equal(0);",
+              "});",
+              "",
+              "// Sonraki testlerde kullanmak için short_code'u kaydet",
+              "const data = pm.response.json();",
+              "pm.collectionVariables.set('short_code', data.short_code);",
+              "pm.collectionVariables.set('short_url', data.short_url);",
+              "console.log('Oluşturulan short_code:', data.short_code);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"original_url\": \"https://www.google.com/search?q=url+shortener+test\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/shorten",
+          "host": ["{{base_url}}"],
+          "path": ["shorten"]
+        },
+        "description": "Uzun bir URL'yi kısaltır.\nBaşarı durumunda 201 Created ve short_code döner."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Get URL Stats — İstatistikler",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Test 1: HTTP 200 dönmeli",
+              "pm.test('Status code 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "// Test 2: Gerekli alanlar var",
+              "pm.test('Required fields present', function() {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data).to.have.property('short_code');",
+              "    pm.expect(data).to.have.property('original_url');",
+              "    pm.expect(data).to.have.property('click_count');",
+              "    pm.expect(data).to.have.property('created_at');",
+              "});",
+              "",
+              "// Test 3: short_code doğru",
+              "pm.test('Correct short_code returned', function() {",
+              "    const data = pm.response.json();",
+              "    const expected = pm.collectionVariables.get('short_code');",
+              "    pm.expect(data.short_code).to.equal(expected);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/stats/{{short_code}}",
+          "host": ["{{base_url}}"],
+          "path": ["stats", "{{short_code}}"]
+        },
+        "description": "Belirli bir kısa URL'nin istatistiklerini gösterir.\nÖnceki testte oluşturulan short_code kullanılır."
+      },
+      "response": []
+    },
+    {
+      "name": "4. List All URLs — URL Listesi",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Test 1: HTTP 200 dönmeli",
+              "pm.test('Status code 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "// Test 2: Yanıt bir dizi (array) olmalı",
+              "pm.test('Response is array', function() {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data).to.be.an('array');",
+              "});",
+              "",
+              "// Test 3: En az 1 URL var (az önce oluşturduk)",
+              "pm.test('At least 1 URL exists', function() {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data.length).to.be.at.least(1);",
+              "});",
+              "",
+              "// Test 4: Her URL gerekli alanları içeriyor",
+              "pm.test('Each URL has required fields', function() {",
+              "    const data = pm.response.json();",
+              "    if (data.length > 0) {",
+              "        pm.expect(data[0]).to.have.property('short_code');",
+              "        pm.expect(data[0]).to.have.property('original_url');",
+              "        pm.expect(data[0]).to.have.property('click_count');",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/urls/list",
+          "host": ["{{base_url}}"],
+          "path": ["urls", "list"],
+          "query": [
+            {
+              "key": "skip",
+              "value": "0"
+            },
+            {
+              "key": "limit",
+              "value": "20"
+            }
+          ]
+        },
+        "description": "Tüm kısa URL'leri listeler.\nskip ve limit ile sayfalama yapılabilir."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Get URL Detail — URL Detayı",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Test 1: HTTP 200 dönmeli",
+              "pm.test('Status code 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "// Test 2: short_url alanı var",
+              "pm.test('short_url field present', function() {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data).to.have.property('short_url');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/urls/{{short_code}}",
+          "host": ["{{base_url}}"],
+          "path": ["urls", "{{short_code}}"]
+        },
+        "description": "Belirli bir kısa URL'nin tüm detaylarını gösterir.\nYönlendirme YAPMAZ — sadece bilgi döner."
+      },
+      "response": []
+    },
+    {
+      "name": "6. Invalid URL — Hata Senaryosu",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Test 1: 400 veya 422 dönmeli (hata)",
+              "pm.test('Error status code returned', function() {",
+              "    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+              "});",
+              "",
+              "// Test 2: Hata detayı var",
+              "pm.test('Error detail present', function() {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data).to.have.property('detail');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"original_url\": \"bu-gecersiz-bir-url\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{base_url}}/shorten",
+          "host": ["{{base_url}}"],
+          "path": ["shorten"]
+        },
+        "description": "Geçersiz URL gönderildiğinde hata dönmeli.\nNegatif test senaryosu."
+      },
+      "response": []
+    },
+    {
+      "name": "7. Delete URL — URL Silme",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Test 1: HTTP 200 dönmeli",
+              "pm.test('Status code 200', function() {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "// Test 2: Başarı mesajı var",
+              "pm.test('Success message present', function() {",
+              "    const data = pm.response.json();",
+              "    pm.expect(data).to.have.property('message');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/urls/{{short_code}}",
+          "host": ["{{base_url}}"],
+          "path": ["urls", "{{short_code}}"]
+        },
+        "description": "Belirli bir kısa URL'yi siler.\nBaşarı durumunda mesaj döner."
+      },
+      "response": []
+    },
+    {
+      "name": "8. Get Deleted URL — Silinen URL 404",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Silinen URL artık bulunamaz",
+              "pm.test('Deleted URL returns 404', function() {",
+              "    pm.response.to.have.status(404);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/stats/{{short_code}}",
+          "host": ["{{base_url}}"],
+          "path": ["stats", "{{short_code}}"]
+        },
+        "description": "Silinen URL'ye erişim 404 dönmeli.\nSilme işleminin başarıyla tamamlandığını doğrular."
+      },
+      "response": []
+    }
+  ]
+}

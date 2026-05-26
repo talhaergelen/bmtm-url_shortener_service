@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Çevre Değişkenleri ve Sanal Ortamlar
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Veritabanı
+*.sqlite
+*.sqlite3
+*.db
+urlshortener.db
+
+# Test ve Coverage raporları
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+htmlcov/
+perf/results.json
+
+# IDE / Editör
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Özel Deneme Dosyaları
+read_pdf.py
+bmtmprojekılavuz.pdf

@@ -1,0 +1,142 @@
+# docker-compose.yml — Yerel Geliştirme Ortamı
+#
+# Bu dosya ne işe yarar?
+#   Tek komutla tüm servisleri başlatır:
+#   - FastAPI uygulaması
+#   - LocalStack (Sahte AWS S3)
+#   - Prometheus (Metrik toplayıcı)
+#   - Grafana (Dashboard)
+#
+# Kullanım:
+#   docker-compose up          → Tüm servisleri başlat
+#   docker-compose up -d       → Arka planda başlat
+#   docker-compose down        → Durdur ve sil
+#   docker-compose logs app    → Uygulama loglarına bak
+#
+# Servisler:
+#   http://localhost:8000      → FastAPI (API + Swagger UI)
+#   http://localhost:4566      → LocalStack (Sahte AWS)
+#   http://localhost:9090      → Prometheus
+#   http://localhost:3000      → Grafana (admin/admin)
+
+version: "3.9"
+
+services:
+
+  # ── FASTAPI UYGULAMASI ─────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      network: host
+    container_name: url-shortener-app
+    ports:
+      - "8001:8000"
+    environment:
+      DATABASE_URL: sqlite:///./urlshortener.db
+      BASE_URL: http://localhost:8000
+      AWS_ENDPOINT_URL: http://localstack:4566
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
+      AWS_DEFAULT_REGION: us-east-1
+      S3_BUCKET_NAME: url-shortener-stats
+    volumes:
+      # Geliştirme kolaylığı: Kod değişikliklerini yansıt
+      - ./src:/app/src:ro
+      # Veritabanını kalıcı yap
+      - db_data:/app
+    depends_on:
+      localstack:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - url-shortener-net
+
+  # ── LOCALSTACK (SAHTE AWS) ─────────────────────────────
+  # LocalStack nedir?
+  #   AWS'yi yerel olarak taklit eder.
+  #   Gerçek AWS hesabı ve para gerekmez!
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: url-shortener-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3              # Sadece S3 servisini başlat
+      DEBUG: 0
+      DATA_DIR: /tmp/localstack/data
+    volumes:
+      - localstack_data:/tmp/localstack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - url-shortener-net
+
+  # ── PROMETHEUS (METRİK TOPLAYICI) ─────────────────────
+  # Prometheus nedir?
+  #   Uygulamadan düzenli aralıklarla metrik toplar.
+  #   /metrics endpoint'inden veri çeker (scrape).
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: url-shortener-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+    networks:
+      - url-shortener-net
+    depends_on:
+      - app
+
+  # ── GRAFANA (DASHBOARD) ────────────────────────────────
+  # Grafana nedir?
+  #   Prometheus'tan aldığı verileri güzel grafiklerle gösterir.
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: url-shortener-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/grafana-dashboard.json:/var/lib/grafana/dashboards/url-shortener.json:ro
+    networks:
+      - url-shortener-net
+    depends_on:
+      - prometheus
+
+# ── KALICI VERİ HACİMLERİ ─────────────────────────────────
+# Volume nedir?
+#   Container silinse bile verilerin kaybolmaması için kalıcı depolama.
+volumes:
+  db_data:
+  localstack_data:
+  prometheus_data:
+  grafana_data:
+
+# ── AĞ TANIMLAMASI ────────────────────────────────────────
+# Tüm servisler aynı ağda — birbirine isim ile erişebilir
+# Örnek: app → http://localstack:4566
+networks:
+  url-shortener-net:
+    driver: bridge
