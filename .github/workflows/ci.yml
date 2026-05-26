@@ -240,6 +240,12 @@ jobs:
           minikube start --driver=docker --cpus=2 --memory=2048
           minikube status
 
+      # Minikube'in kendi Docker daemon'u içine image'ı build et
+      - name: Minikube Image Build
+        run: |
+          minikube image build -t url-shortener:latest .
+          echo "✅ Image Minikube içine build edildi"
+
       # kubectl ile manifests uygula
       - name: K8s ConfigMap Uygula
         run: |
