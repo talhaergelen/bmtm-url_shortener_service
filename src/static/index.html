@@ -11,23 +11,23 @@
   <style>
     /* ── DESIGN TOKENS ── */
     :root {
-      --bg:        #000000;
-      --surface:   #0A0A0A;
-      --surface2:  #111111;
-      --surface3:  #1A1A1A;
-      --border:    #222222;
-      --border2:   #333333;
-      --accent:    #FFFFFF;
-      --accent2:   #A1A1AA;
-      --accent3:   #A1A1AA;
-      --green:     #10B981;
-      --red:       #EF4444;
-      --text:      #EDEDED;
-      --muted:     #888888;
-      --muted2:    #A1A1AA;
-      --radius:    8px;
-      --r-sm:      6px;
-      --shadow:    0 4px 24px rgba(0,0,0,0.5);
+      --bg:        #0f172a;
+      --surface:   #1e293b;
+      --surface2:  #334155;
+      --surface3:  #475569;
+      --border:    #334155;
+      --border2:   #475569;
+      --accent:    #818cf8;
+      --accent2:   #38bdf8;
+      --accent3:   #fbbf24;
+      --green:     #34d399;
+      --red:       #f87171;
+      --text:      #f8fafc;
+      --muted:     #94a3b8;
+      --muted2:    #cbd5e1;
+      --radius:    12px;
+      --r-sm:      8px;
+      --shadow:    0 10px 25px -5px rgba(0,0,0,0.3);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -101,7 +101,7 @@
     }
 
     .nav-item:hover { color: var(--text); background: rgba(139,92,246,.08); }
-    .nav-item.active { color: var(--accent); background: rgba(139,92,246,.12); font-weight: 600; border-right: 2px solid var(--accent); }
+    .nav-item.active { color: var(--accent); background: rgba(129,140,248,.12); font-weight: 600; border-right: 3px solid var(--accent); }
     .nav-item .icon { font-size: 1rem; width: 20px; text-align: center; }
 
     .nav-divider { height: 1px; background: var(--border); margin: 12px 20px; }
@@ -127,10 +127,10 @@
       min-height: 100vh;
     }
 
-    /* Top bar */
     .topbar {
-      background: rgba(16,17,26,.85);
+      background: rgba(30, 41, 59, 0.7);
       backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid var(--border);
       padding: 14px 32px;
       display: flex;
@@ -247,7 +247,12 @@
     .btn:active { transform: translateY(0); }
     .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 
-    .btn-primary { background: var(--text); color: var(--bg); font-weight: 500; }
+    .btn-primary { 
+      background: var(--accent); 
+      color: #0f172a; 
+      font-weight: 600; 
+      box-shadow: 0 4px 14px rgba(129,140,248,0.3); 
+    }
     .btn-ghost {
       background: transparent;
       border: 1px solid var(--border);
