@@ -93,6 +93,7 @@ jobs:
           sleep 10
           
       # Pytest çalıştır
+      - name: Pytest Çalıştır
         run: |
           pytest tests/unit/ tests/integration/ \
             --cov=src \
