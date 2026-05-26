@@ -170,7 +170,7 @@ class TestE2EUrlShortener:
         result_box.wait_for(state="visible", timeout=5000)
         
         # Kısa URL alanı dolu olmalı
-        short_url_input = page.locator("#result-short-url")
+        short_url_input = page.locator("#result-url")
         short_url_value = short_url_input.input_value()
         
         assert short_url_value, "Kısa URL boş olmamalı"
@@ -194,7 +194,7 @@ class TestE2EUrlShortener:
         page.click("#shorten-btn")
         
         # Hata mesajı görünmeli
-        error_msg = page.locator("#error-msg")
+        error_msg = page.locator("#err-msg")
         error_msg.wait_for(state="visible", timeout=3000)
         
         error_text = error_msg.inner_text()
@@ -221,14 +221,14 @@ class TestE2EUrlShortener:
         page.locator("#result-box").wait_for(state="visible", timeout=5000)
         
         # Kısa kodu al
-        short_url = page.locator("#result-short-url").input_value()
+        short_url = page.locator("#result-url").input_value()
         short_code = short_url.split("/")[-1] if short_url else ""
         
         # Liste yenilenene kadar bekle
         page.wait_for_timeout(1000)
         
         # Liste kısmında short_code görünmeli
-        list_el = page.locator("#url-list")
+        list_el = page.locator("#home-list")
         list_content = list_el.inner_text()
         
         assert short_code in list_content, \
