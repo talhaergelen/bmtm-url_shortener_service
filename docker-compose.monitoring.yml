@@ -1,0 +1,82 @@
+# docker-compose.monitoring.yml
+#
+# Sadece monitoring servislerini başlatır (app olmadan).
+# Uygulama localhost:8000'de direkt çalışırken bu dosyayı kullan.
+#
+# Kullanım:
+#   docker-compose -f docker-compose.monitoring.yml up -d
+#   http://localhost:9090  → Prometheus
+#   http://localhost:3000  → Grafana (admin/admin)
+#   http://localhost:16686 → Jaeger
+#   http://localhost:4566  → LocalStack S3
+
+services:
+
+  localstack:
+    image: localstack/localstack:3.0
+    container_name: url-shortener-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3
+      DEBUG: 0
+    networks:
+      - monitoring-net
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: url-shortener-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - monitoring-net
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: url-shortener-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      # Otomatik data source provisioning
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/grafana-dashboard.json:/var/lib/grafana/dashboards/url-shortener.json:ro
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring-net
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.53
+    container_name: url-shortener-jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+      - "14268:14268"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    networks:
+      - monitoring-net
+
+volumes:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  monitoring-net:
+    driver: bridge
