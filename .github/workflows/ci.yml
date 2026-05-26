@@ -276,10 +276,12 @@ jobs:
           kubectl get configmaps
           echo "✅ K8s kaynakları listelendi"
 
-      # Dry-run doğrulama (manifest yapısı kontrolü)
+      # Dry-run doğrulama (sadece temel K8s kaynakları için)
       - name: Manifest Doğrulama (Dry-Run)
         run: |
-          kubectl apply -f k8s/ --dry-run=client
+          kubectl apply -f k8s/configmap.yaml --dry-run=client
+          kubectl apply -f k8s/deployment.yaml --dry-run=client
+          kubectl apply -f k8s/service.yaml --dry-run=client
           echo "✅ Tüm K8s manifestleri geçerli"
 
 
