@@ -20,40 +20,37 @@
 # Bağımlılıkları derle/kur
 FROM python:3.11-slim AS builder
 
-# Çalışma dizini
 WORKDIR /app
 
-# Bağımlılık dosyasını kopyala (kod değişse bile cache kullanmak için)
 COPY requirements.txt .
 
-# pip ile bağımlılıkları kur
-# --no-cache-dir: pip cache'ini kaldır (image boyutunu küçültür)
-# --user: Sistem Python'una değil, kullanıcı dizinine kur
-RUN pip install --no-cache-dir --user -r requirements.txt
+# /install prefix'e kur — --user yerine prefix kullanmak daha güvenilir
+# Çünkü kullanıcı değiştiğinde --user path'i kaybolur
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
 
 # ── AŞAMA 2: RUNTIME ──────────────────────────────────────
-# Üretim için hafif ve güvenli image
 FROM python:3.11-slim AS runtime
 
 # Güvenlik: Root olmayan kullanıcı oluştur
-# Production'da root ile çalışmak güvenlik riski
 RUN useradd --create-home --shell /bin/bash appuser
 
 WORKDIR /app
 
-# Builder aşamasından kurulu Python paketlerini kopyala
-COPY --from=builder /root/.local /home/appuser/.local
+# Builder'dan kurulu paketleri sistem Python'una kopyala
+COPY --from=builder /install /usr/local
 
 # Uygulama kodunu kopyala
 COPY src/ ./src/
-COPY .env .env
+
+# .env varsa kopyala (yoksa build bozulmasın)
+COPY requirements.txt .
 
 # Kullanıcıya geç
 USER appuser
 
-# PATH'e kullanıcı Python bin'ini ekle
-ENV PATH=/home/appuser/.local/bin:$PATH
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 # Uygulama portu (belgele — expose ettik ama host'a açmaz)
 EXPOSE 8000
