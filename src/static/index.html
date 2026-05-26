@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>URL Shortener — Admin Dashboard</title>
@@ -10,23 +11,23 @@
   <style>
     /* ── DESIGN TOKENS ── */
     :root {
-      --bg:        #08090f;
-      --surface:   #10111a;
-      --surface2:  #181928;
-      --surface3:  #1f2035;
-      --border:    rgba(139,92,246,.18);
-      --border2:   rgba(139,92,246,.35);
-      --accent:    #8b5cf6;
-      --accent2:   #06b6d4;
-      --accent3:   #f59e0b;
-      --green:     #10b981;
-      --red:       #ef4444;
-      --text:      #f1f5f9;
-      --muted:     #64748b;
-      --muted2:    #94a3b8;
-      --radius:    14px;
-      --r-sm:      8px;
-      --shadow:    0 8px 40px rgba(139,92,246,.12);
+      --bg:        #000000;
+      --surface:   #0A0A0A;
+      --surface2:  #111111;
+      --surface3:  #1A1A1A;
+      --border:    #222222;
+      --border2:   #333333;
+      --accent:    #FFFFFF;
+      --accent2:   #A1A1AA;
+      --accent3:   #A1A1AA;
+      --green:     #10B981;
+      --red:       #EF4444;
+      --text:      #EDEDED;
+      --muted:     #888888;
+      --muted2:    #A1A1AA;
+      --radius:    8px;
+      --r-sm:      6px;
+      --shadow:    0 4px 24px rgba(0,0,0,0.5);
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -62,10 +63,7 @@
     .sidebar-logo .logo-text {
       font-size: 1.1rem;
       font-weight: 700;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--text);
       display: block;
     }
 
@@ -249,7 +247,7 @@
     .btn:active { transform: translateY(0); }
     .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 
-    .btn-primary { background: linear-gradient(135deg, var(--accent), #7c3aed); color: #fff; }
+    .btn-primary { background: var(--text); color: var(--bg); font-weight: 500; }
     .btn-ghost {
       background: transparent;
       border: 1px solid var(--border);
@@ -427,30 +425,30 @@
 <!-- ── SIDEBAR ── -->
 <aside>
   <div class="sidebar-logo">
-    <span class="logo-text">🔗 URL Shortener</span>
+    <span class="logo-text"><i data-lucide="link" style="width:16px;height:16px;margin-right:6px;vertical-align:middle;"></i>URL Shortener</span>
     <span class="logo-sub">Admin Dashboard v1.0</span>
   </div>
 
   <span class="nav-section-label">MENÜ</span>
 
   <button class="nav-item active" onclick="showPage('home', this)" id="nav-home">
-    <span class="icon">🏠</span><span class="label">Ana Sayfa</span>
+    <i data-lucide="layout-dashboard" class="icon"></i><span class="label">Ana Sayfa</span>
   </button>
   <button class="nav-item" onclick="showPage('urls', this)" id="nav-urls">
-    <span class="icon">🔗</span><span class="label">URL Yönetimi</span>
+    <i data-lucide="link" class="icon"></i><span class="label">URL Yönetimi</span>
   </button>
   <button class="nav-item" onclick="showPage('metrics', this)" id="nav-metrics">
-    <span class="icon">📊</span><span class="label">Metrikler</span>
+    <i data-lucide="bar-chart-2" class="icon"></i><span class="label">Metrikler</span>
   </button>
   <button class="nav-item" onclick="showPage('tools', this)" id="nav-tools">
-    <span class="icon">🛠</span><span class="label">Servisler</span>
+    <i data-lucide="settings" class="icon"></i><span class="label">Servisler</span>
   </button>
 
   <div class="nav-divider"></div>
   <span class="nav-section-label">DURUM</span>
 
   <div class="nav-item" style="cursor:default;">
-    <span class="icon">❤️</span>
+    <i data-lucide="activity" class="icon"></i>
     <span class="label">Sağlık</span>
     <span class="health-dot" id="sidebar-health"></span>
   </div>
@@ -461,7 +459,7 @@
 
   <!-- Topbar -->
   <div class="topbar">
-    <span class="topbar-title" id="topbar-title">🏠 Ana Sayfa</span>
+    <span class="topbar-title" id="topbar-title">Ana Sayfa</span>
     <div class="stat-pills">
       <div class="stat-pill">🔗 Toplam URL: <span class="val" id="pill-urls">—</span></div>
       <div class="stat-pill">👆 Toplam Tıklama: <span class="val" id="pill-clicks">—</span></div>
@@ -472,29 +470,29 @@
   <!-- ── SAYFA 1: ANA SAYFA ── -->
   <div class="page active" id="page-home">
     <div class="page-header">
-      <h2>⚡ Hızlı URL Kısalt</h2>
+      <h2>Hızlı URL Kısalt</h2>
       <p>Uzun URL'yi yapıştır, tek tıkla kısalt.</p>
     </div>
 
     <!-- Metric cards -->
     <div class="grid-4" style="margin-bottom:24px;" id="home-metrics">
       <div class="metric-card purple">
-        <div class="m-icon">🔗</div>
+        <i data-lucide="link" class="m-icon"></i>
         <div class="m-val" id="hm-urls">—</div>
         <div class="m-label">Toplam URL</div>
       </div>
       <div class="metric-card cyan">
-        <div class="m-icon">👆</div>
+        <i data-lucide="mouse-pointer-click" class="m-icon"></i>
         <div class="m-val" id="hm-clicks">—</div>
         <div class="m-label">Toplam Tıklama</div>
       </div>
       <div class="metric-card green">
-        <div class="m-icon">✅</div>
+        <i data-lucide="check-circle" class="m-icon"></i>
         <div class="m-val" id="hm-health">—</div>
         <div class="m-label">Servis Durumu</div>
       </div>
       <div class="metric-card amber">
-        <div class="m-icon">⚡</div>
+        <i data-lucide="zap" class="m-icon"></i>
         <div class="m-val" id="hm-created">—</div>
         <div class="m-label">Son 1 dk</div>
       </div>
@@ -502,7 +500,7 @@
 
     <!-- Shorten form -->
     <div class="card">
-      <div class="card-title">✂️ URL KISALT</div>
+      <div class="card-title">URL KISALT</div>
       <div class="form-row">
         <input type="url" id="url-input" placeholder="https://uzun-adresinizi-buraya-yapistirin.com/..." autocomplete="off" />
         <button class="btn btn-primary" onclick="shortenUrl()" id="shorten-btn">Kısalt</button>
@@ -510,11 +508,11 @@
       <div class="err-msg" id="err-msg"></div>
 
       <div class="result-box" id="result-box">
-        <div class="result-label">✅ Kısa URL Oluşturuldu</div>
+        <div class="result-label">Kısa URL Oluşturuldu</div>
         <div class="result-row">
           <input type="text" class="result-url" id="result-url" readonly />
           <button class="btn btn-copy" onclick="copyUrl()">Kopyala</button>
-          <button class="btn btn-ghost" style="padding:6px 12px;font-size:.8rem;" onclick="openUrl()">↗ Aç</button>
+          <button class="btn btn-ghost" style="padding:6px 12px;font-size:.8rem;" onclick="openUrl()">Aç</button>
         </div>
         <div class="result-meta">
           <div class="meta-item"><div class="mk">Kısa Kod</div><div class="mv" id="m-code">—</div></div>
@@ -526,8 +524,8 @@
 
     <!-- Recent URLs -->
     <div class="section-hdr">
-      <h3>📋 Son URL'ler</h3>
-      <button class="btn btn-ghost" onclick="loadUrls('home-list')" style="padding:6px 12px;font-size:.8rem;">↻ Yenile</button>
+      <h3>Son URL'ler</h3>
+      <button class="btn btn-ghost" onclick="loadUrls('home-list')" style="padding:6px 12px;font-size:.8rem;">Yenile</button>
     </div>
     <div class="card" style="padding:0;overflow:hidden;">
       <table class="url-table">
@@ -548,12 +546,12 @@
   <!-- ── SAYFA 2: URL YÖNETİMİ ── -->
   <div class="page" id="page-urls">
     <div class="page-header">
-      <h2>🔗 URL Yönetimi</h2>
+      <h2>URL Yönetimi</h2>
       <p>Tüm kısa URL'leri görüntüle, sil ve istatistiklerini izle.</p>
     </div>
 
     <div class="card" style="margin-bottom:20px;">
-      <div class="card-title">➕ YENİ URL EKLE</div>
+      <div class="card-title">YENİ URL EKLE</div>
       <div class="form-row">
         <input type="url" id="url-input-2" placeholder="https://..." autocomplete="off" />
         <button class="btn btn-primary" onclick="shortenUrl2()">Kısalt</button>
@@ -564,7 +562,7 @@
     <div class="card" style="padding:0;overflow:hidden;">
       <div style="padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
         <span style="font-weight:600;font-size:.9rem;">Tüm URL'ler</span>
-        <button class="btn btn-ghost" onclick="loadUrls('url-list-full')" style="padding:6px 12px;font-size:.8rem;">↻ Yenile</button>
+        <button class="btn btn-ghost" onclick="loadUrls('url-list-full')" style="padding:6px 12px;font-size:.8rem;">Yenile</button>
       </div>
       <table class="url-table">
         <thead>
@@ -585,28 +583,28 @@
   <!-- ── SAYFA 3: METRİKLER ── -->
   <div class="page" id="page-metrics">
     <div class="page-header">
-      <h2>📊 Canlı Metrikler</h2>
+      <h2>Canlı Metrikler</h2>
       <p>Prometheus metrikleri ve uygulama istatistikleri — otomatik güncellenir.</p>
     </div>
 
     <div class="grid-4" style="margin-bottom:24px;">
       <div class="metric-card purple">
-        <div class="m-icon">🔗</div>
+        <i data-lucide="link" class="m-icon"></i>
         <div class="m-val" id="pm-created">—</div>
         <div class="m-label">URL Oluşturma (toplam)</div>
       </div>
       <div class="metric-card cyan">
-        <div class="m-icon">↪️</div>
+        <i data-lucide="corner-down-right" class="m-icon"></i>
         <div class="m-val" id="pm-redirects">—</div>
         <div class="m-label">Redirect (toplam)</div>
       </div>
       <div class="metric-card amber">
-        <div class="m-icon">📦</div>
+        <i data-lucide="package" class="m-icon"></i>
         <div class="m-val" id="pm-active">—</div>
         <div class="m-label">Aktif URL</div>
       </div>
       <div class="metric-card" style="border-color:rgba(239,68,68,.25);">
-        <div class="m-icon">❌</div>
+        <i data-lucide="x-circle" class="m-icon"></i>
         <div class="m-val" id="pm-404" style="color:var(--red);">—</div>
         <div class="m-label">404 Hatası</div>
       </div>
@@ -615,8 +613,8 @@
     <div class="grid-2">
       <!-- Parsed metrics -->
       <div class="card">
-        <div class="card-title">📈 UYGULAMA METRİKLERİ
-          <button class="btn btn-ghost" onclick="loadMetrics()" style="padding:3px 10px;font-size:.72rem;margin-left:auto;">↻</button>
+        <div class="card-title">UYGULAMA METRİKLERİ
+          <button class="btn btn-ghost" onclick="loadMetrics()" style="padding:3px 10px;font-size:.72rem;margin-left:auto;">Yenile</button>
         </div>
         <div id="parsed-metrics">
           <div class="empty-state pulse">Metrikler yükleniyor...</div>
@@ -625,7 +623,7 @@
 
       <!-- Health & info -->
       <div class="card">
-        <div class="card-title">🏥 SERVİS SAĞLIĞI</div>
+        <div class="card-title">SERVİS SAĞLIĞI</div>
         <div id="health-details">
           <div class="empty-state pulse">Kontrol ediliyor...</div>
         </div>
@@ -634,8 +632,8 @@
 
     <!-- Raw Prometheus -->
     <div class="card" style="margin-top:20px;">
-      <div class="card-title">🔢 PROMETHEUS RAW (/metrics)
-        <a href="/metrics" target="_blank" style="margin-left:auto;font-size:.72rem;color:var(--accent);text-decoration:none;">Tam görüntüle ↗</a>
+      <div class="card-title">PROMETHEUS RAW (/metrics)
+        <a href="/metrics" target="_blank" style="margin-left:auto;font-size:.72rem;color:var(--accent);text-decoration:none;">Tam görüntüle </a>
       </div>
       <div id="raw-metrics" class="pulse">Yükleniyor...</div>
     </div>
@@ -644,73 +642,73 @@
   <!-- ── SAYFA 4: SERVİSLER ── -->
   <div class="page" id="page-tools">
     <div class="page-header">
-      <h2>🛠 Servisler & Araçlar</h2>
+      <h2>Servisler & Araçlar</h2>
       <p>Tüm servis linkleri ve API araçları tek yerde.</p>
     </div>
 
-    <div class="card-title" style="margin-bottom:14px;">🔗 API & UYGULAMA</div>
+    <div class="card-title" style="margin-bottom:14px;">API & UYGULAMA</div>
     <div class="tool-grid" style="margin-bottom:28px;">
       <a href="/docs" target="_blank" class="tool-card">
-        <span class="t-icon">📖</span>
+        <i data-lucide="book-open" class="t-icon"></i>
         <span class="t-name">Swagger UI</span>
         <span class="t-desc">API endpoint'lerini tarayıcıdan test et</span>
         <span class="t-url">localhost:8000/docs</span>
       </a>
       <a href="/redoc" target="_blank" class="tool-card">
-        <span class="t-icon">📄</span>
+        <i data-lucide="file-text" class="t-icon"></i>
         <span class="t-name">ReDoc</span>
         <span class="t-desc">Alternatif API dokümantasyonu</span>
         <span class="t-url">localhost:8000/redoc</span>
       </a>
       <a href="/health" target="_blank" class="tool-card">
-        <span class="t-icon">❤️</span>
+        <i data-lucide="activity" class="t-icon"></i>
         <span class="t-name">Health Check</span>
         <span class="t-desc">Servis sağlık durumu JSON</span>
         <span class="t-url">localhost:8000/health</span>
       </a>
       <a href="/metrics" target="_blank" class="tool-card">
-        <span class="t-icon">📊</span>
+        <i data-lucide="bar-chart" class="t-icon"></i>
         <span class="t-name">Prometheus</span>
         <span class="t-desc">Raw Prometheus metrikleri</span>
         <span class="t-url">localhost:8000/metrics</span>
       </a>
       <a href="/urls/list" target="_blank" class="tool-card">
-        <span class="t-icon">📋</span>
+        <i data-lucide="list" class="t-icon"></i>
         <span class="t-name">URL List API</span>
         <span class="t-desc">Tüm URL'ler JSON olarak</span>
         <span class="t-url">localhost:8000/urls/list</span>
       </a>
     </div>
 
-    <div class="card-title" style="margin-bottom:14px;">📈 MONİTORİNG</div>
+    <div class="card-title" style="margin-bottom:14px;">MONİTORİNG</div>
     <div class="tool-grid" style="margin-bottom:28px;">
       <a href="http://localhost:9090" target="_blank" class="tool-card" id="tool-prometheus">
-        <span class="t-icon">🔥</span>
+        <i data-lucide="flame" class="t-icon"></i>
         <span class="t-name">Prometheus UI</span>
         <span class="t-desc">PromQL sorguları, metrik explorer</span>
         <span class="t-url">localhost:9090</span>
       </a>
       <a href="http://localhost:3000" target="_blank" class="tool-card" id="tool-grafana">
-        <span class="t-icon">📉</span>
+        <i data-lucide="line-chart" class="t-icon"></i>
         <span class="t-name">Grafana</span>
         <span class="t-desc">Dashboard — admin/admin</span>
         <span class="t-url">localhost:3000</span>
       </a>
       <a href="http://localhost:16686" target="_blank" class="tool-card" id="tool-jaeger">
-        <span class="t-icon">🔭</span>
+        <i data-lucide="telescope" class="t-icon"></i>
         <span class="t-name">Jaeger Tracing</span>
         <span class="t-desc">Distributed trace görüntüleyici</span>
         <span class="t-url">localhost:16686</span>
       </a>
       <a href="http://localhost:4566/_localstack/health" target="_blank" rel="noreferrer" class="tool-card" id="tool-localstack">
-        <span class="t-icon">☁️</span>
+        <i data-lucide="cloud" class="t-icon"></i>
         <span class="t-name">LocalStack S3 (Sağlık)</span>
         <span class="t-desc">S3 Endpoint'inin durum JSON'u</span>
         <span class="t-url">localhost:4566/_localstack/health</span>
       </a>
     </div>
 
-    <div class="card-title" style="margin-bottom:14px;">⚙️ SERVİS DURUMU</div>
+    <div class="card-title" style="margin-bottom:14px;">SERVİS DURUMU</div>
     <div class="card" style="padding:0;overflow:hidden;">
       <table class="url-table">
         <thead><tr><th>SERVİS</th><th>ADRES</th><th>DURUM</th></tr></thead>
@@ -734,12 +732,13 @@ function showPage(name, btn) {
   document.getElementById('page-' + name).classList.add('active');
   btn.classList.add('active');
 
-  const titles = { home:'🏠 Ana Sayfa', urls:'🔗 URL Yönetimi', metrics:'📊 Metrikler', tools:'🛠 Servisler & Araçlar' };
+  const titles = { home:'Ana Sayfa', urls:'URL Yönetimi', metrics:'Metrikler', tools:'Servisler & Araçlar' };
   document.getElementById('topbar-title').textContent = titles[name] || name;
 
   if (name === 'urls')    loadUrls('url-list-full');
   if (name === 'metrics') loadMetrics();
   if (name === 'tools')   checkServices();
+  setTimeout(() => lucide.createIcons(), 50);
 }
 
 // ── SHORTEN (Home) ───────────────────────────────────────
@@ -749,6 +748,7 @@ async function shortenUrl() {
 async function shortenUrl2() {
   await _shorten('url-input-2', 'err-msg-2', null, false);
   loadUrls('url-list-full');
+  setTimeout(() => lucide.createIcons(), 50);
 }
 
 async function _shorten(inputId, errId, btnId, showResult) {
@@ -795,7 +795,7 @@ async function _shorten(inputId, errId, btnId, showResult) {
 
 function showErr(input, errEl, msg) {
   input.classList.add('err');
-  errEl.textContent = '⚠️ ' + msg;
+  errEl.textContent = '' + msg;
   errEl.style.display = 'block';
 }
 
@@ -803,7 +803,7 @@ function copyUrl() {
   const url = document.getElementById('result-url').value;
   navigator.clipboard.writeText(url).then(() => {
     const btn = event.target;
-    btn.textContent = '✓ Kopyalandı!';
+    btn.textContent = 'Kopyalandı';
     setTimeout(() => btn.textContent = 'Kopyala', 2000);
   });
 }
@@ -835,12 +835,13 @@ async function loadUrls(tableId) {
         <td><span class="click-badge">${u.click_count}</span></td>
         <td style="color:var(--muted);font-size:.78rem;">${fmtDate(u.created_at)}</td>
         <td>
-          <button class="btn btn-danger" onclick="deleteUrl('${u.short_code}','${tableId}')">🗑 Sil</button>
+          <button class="btn btn-danger" onclick="deleteUrl('${u.short_code}','${tableId}')">Sil</button>
         </td>
       </tr>
     `).join('');
 
     loadTopStats(urls);
+    setTimeout(() => lucide.createIcons(), 50);
   } catch(e) {
     tbody.innerHTML = `<tr><td colspan="6" class="empty-state" style="color:var(--red)">Hata: ${e.message}</td></tr>`;
   }
@@ -891,7 +892,7 @@ async function checkHealth() {
     const res  = await fetch(`${API}/health`);
     const data = await res.json();
     dot.className  = 'health-dot ok';
-    pill.innerHTML = '<span class="badge-ok">✅ Sağlıklı</span>';
+    pill.innerHTML = '<span class="badge-ok">Sağlıklı</span>';
     if (hmEl) { hmEl.textContent = 'Sağlıklı'; hmEl.style.color = 'var(--green)'; }
 
     // Health details
@@ -906,7 +907,7 @@ async function checkHealth() {
     }
   } catch {
     dot.className  = 'health-dot err';
-    pill.innerHTML = '<span class="badge-err">❌ Çevrimdışı</span>';
+    pill.innerHTML = '<span class="badge-err">Çevrimdışı</span>';
     if (hmEl) { hmEl.textContent = 'Çevrimdışı'; hmEl.style.color = 'var(--red)'; }
   }
 }
@@ -977,7 +978,7 @@ async function checkServices() {
     <tr>
       <td style="font-weight:500">${s.name}</td>
       <td style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--muted)">${s.label}</td>
-      <td><span class="badge-warn pulse" id="svc-${s.name.replace(/\s/g,'')}">⏳ Kontrol...</span></td>
+      <td><span class="badge-warn pulse" id="svc-${s.name.replace(/\s/g,'')}">Kontrol ediliyor...</span></td>
     </tr>
   `).join('');
 
@@ -986,10 +987,10 @@ async function checkServices() {
     try {
       await fetch(s.url, { mode: 'no-cors', signal: AbortSignal.timeout(2500) });
       document.getElementById(id).outerHTML =
-        `<span class="badge-ok" id="${id}">✅ Çalışıyor</span>`;
+        `<span class="badge-ok" id="${id}">Çalışıyor</span>`;
     } catch {
       document.getElementById(id).outerHTML =
-        `<span class="badge-err" id="${id}">❌ Çevrimdışı</span>`;
+        `<span class="badge-err" id="${id}">Çevrimdışı</span>`;
     }
   }
 }
@@ -1020,7 +1021,9 @@ setInterval(() => {
   checkHealth();
   loadTopStats();
   if (document.getElementById('page-metrics').classList.contains('active')) loadMetrics();
+  setTimeout(() => lucide.createIcons(), 50);
 }, 30000);
 </script>
+  <script>lucide.createIcons();</script>
 </body>
 </html>
