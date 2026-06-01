@@ -32,7 +32,7 @@ services:
       network: host
     container_name: url-shortener-app
     ports:
-      - "8001:8000"
+      - "8000:8000"
     environment:
       DATABASE_URL: sqlite:////tmp/urlshortener.db
       BASE_URL: http://localhost:8000
@@ -44,11 +44,12 @@ services:
     volumes:
       # Geliştirme kolaylığı: Kod değişikliklerini yansıt
       - ./src:/app/src:ro
+      - ./tests:/app/tests:ro
     depends_on:
       localstack:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -67,13 +68,13 @@ services:
     ports:
       - "4566:4566"
     environment:
-      SERVICES: s3              # Sadece S3 servisini başlat
+      SERVICES: s3 # Sadece S3 servisini başlat
       DEBUG: 0
       DATA_DIR: /var/lib/localstack
     volumes:
       - localstack_data:/var/lib/localstack
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:4566/_localstack/health" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -117,6 +118,7 @@ services:
       GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./monitoring/grafana/grafana-dashboard.json:/var/lib/grafana/dashboards/url-shortener.json:ro
     networks:
       - url-shortener-net
@@ -134,15 +136,14 @@ services:
     image: jaegertracing/all-in-one:1.53
     container_name: url-shortener-jaeger
     ports:
-      - "16686:16686"   # Jaeger UI
-      - "4317:4317"     # OTLP gRPC
-      - "4318:4318"     # OTLP HTTP (uygulama buraya gönderir)
-      - "14268:14268"   # Jaeger HTTP collector
+      - "16686:16686" # Jaeger UI
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP (uygulama buraya gönderir)
+      - "14268:14268" # Jaeger HTTP collector
     environment:
       COLLECTOR_OTLP_ENABLED: "true"
     networks:
       - url-shortener-net
-
 
 # ── KALICI VERİ HACİMLERİ ─────────────────────────────────
 # Volume nedir?
@@ -153,9 +154,9 @@ volumes:
   prometheus_data:
   grafana_data:
 
-# ── AĞ TANIMLAMASI ────────────────────────────────────────
-# Tüm servisler aynı ağda — birbirine isim ile erişebilir
-# Örnek: app → http://localstack:4566
+    # ── AĞ TANIMLAMASI ────────────────────────────────────────
+    # Tüm servisler aynı ağda — birbirine isim ile erişebilir
+    # Örnek: app → http://localstack:4566
 networks:
   url-shortener-net:
     driver: bridge
