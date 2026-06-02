@@ -41,6 +41,7 @@ services:
       AWS_SECRET_ACCESS_KEY: test
       AWS_DEFAULT_REGION: us-east-1
       S3_BUCKET_NAME: url-shortener-stats
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
     volumes:
       # Geliştirme kolaylığı: Kod değişikliklerini yansıt
       - ./src:/app/src:ro

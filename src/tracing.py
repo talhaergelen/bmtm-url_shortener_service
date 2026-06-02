@@ -35,9 +35,11 @@ def setup_tracing(db_engine=None) -> trace.Tracer:
     # OTLP (Jaeger) dene, yoksa Console'a yaz
     try:
         from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-        exporter = OTLPSpanExporter(endpoint="http://localhost:4318/v1/traces")
+        import os
+        endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4318/v1/traces")
+        exporter = OTLPSpanExporter(endpoint=endpoint)
         provider.add_span_processor(BatchSpanProcessor(exporter))
-        logger.info("✅ OTLP/Jaeger exporter aktif")
+        logger.info(f"✅ OTLP/Jaeger exporter aktif ({endpoint})")
     except Exception:
         provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
         logger.info("📺 Console span exporter aktif (Jaeger yok)")
