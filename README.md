@@ -602,3 +602,5 @@ Coverage: %70+ (pytest --cov=src --cov-fail-under=70)
 MIT License ‚Äî Bkz. [LICENSE](LICENSE)
 "" 
 "## Sunum Canlç Testi" 
+"" 
+"## Sunum Canlç Testi1" 
