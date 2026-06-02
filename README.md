@@ -600,3 +600,5 @@ Coverage: %70+ (pytest --cov=src --cov-fail-under=70)
 ## 📄 Lisans
 
 MIT License — Bkz. [LICENSE](LICENSE)
+"" 
+"## Sunum Canl� Testi" 
