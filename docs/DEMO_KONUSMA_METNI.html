@@ -1,0 +1,131 @@
+<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>🎬 Canlı Demo Konuşma Metni</title><style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap");
+@page { size: A4; margin: 2cm 2.5cm; }
+@media print { body { -webkit-print-color-adjust: exact; } h2 { page-break-after: avoid; } pre { page-break-inside: avoid; } }
+body { font-family: "Inter", -apple-system, sans-serif; font-size: 13px; line-height: 1.75; color: #1e293b; background: #fff; max-width: 750px; margin: 0 auto; padding: 32px; }
+h1 { font-size: 26px; font-weight: 800; color: #0f172a; border-bottom: 3px solid #3b82f6; padding-bottom: 8px; margin-top: 32px; margin-bottom: 16px; }
+h2 { font-size: 18px; font-weight: 700; color: #1e40af; margin-top: 28px; margin-bottom: 12px; padding: 8px 14px; background: #eff6ff; border-left: 5px solid #3b82f6; border-radius: 0 8px 8px 0; }
+h3 { font-size: 14px; font-weight: 700; color: #dc2626; margin-top: 22px; margin-bottom: 8px; padding: 6px 10px; background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 0 6px 6px 0; }
+p { margin-bottom: 10px; }
+strong { color: #0f172a; background: #fef3c7; padding: 1px 5px; border-radius: 3px; }
+blockquote { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px 16px; margin: 14px 0; border-radius: 0 8px 8px 0; font-size: 12px; color: #166534; }
+code { font-family: "SF Mono","Fira Code",monospace; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #dc2626; }
+pre { background: #1e293b; color: #e2e8f0; padding: 14px 18px; border-radius: 8px; font-size: 11px; line-height: 1.6; overflow-x: auto; margin: 12px 0; }
+pre code { background: none; color: #e2e8f0; padding: 0; }
+hr { border: none; border-top: 2px solid #e2e8f0; margin: 22px 0; }
+ul, ol { margin-bottom: 12px; padding-left: 24px; }
+li { margin-bottom: 5px; }
+table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 12px; }
+th { background: #1e40af; color: white; padding: 8px 12px; text-align: left; font-weight: 600; }
+td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+tr:nth-child(even) td { background: #f8fafc; }
+.doc-header { text-align: center; padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #dc2626 0%, #7c3aed 100%); color: white; border-radius: 12px; }
+.doc-header h1 { color: white; border: none; font-size: 26px; margin: 0 0 8px 0; padding: 0; }
+.doc-header p { color: #fecaca; margin: 0; text-align: center; font-size: 14px; }
+</style></head><body><div class="doc-header"><h1>🎬 Canlı Demo Konuşma Metni</h1><p>URL Shortener Service — 7 Dakikalık Canlı Demo</p></div><h1>CANLI DEMO KONUŞMA METNİ (7 Dakika)</h1>
+<h2>Slayt sunumundan SONRA başlar</h2>
+<blockquote>
+<p>Ekranında yan yana açık olacaklar:
+- <strong>Sol yarı:</strong> Terminal (VS Code veya iTerm)
+- <strong>Sağ yarı:</strong> Tarayıcı (localhost:8000 Admin Dashboard + GitHub sekmesi)</p>
+<p>Tarayıcıda hazır açık sekmeler:
+1. localhost:8000 (Arayüz — Ana Sayfa)
+2. github.com/talhaergelen/bmtm-url_shortener_service (Actions sekmesi)
+3. localhost:3000 (Grafana)
+4. localhost:16686 (Jaeger)</p>
+</blockquote>
+<hr />
+<h2>ADIM 1 — ARAYÜZDEN URL KISALT + PR AÇ + CI TETİKLE (0:00 – 2:00)</h2>
+<p><strong>[Tarayıcıda localhost:8000 Ana Sayfa açık]</strong></p>
+<p>Hocam önce sistemimizin çalıştığını göstereyim. Gördüğünüz gibi Admin Dashboard'umuz ayakta. Üst kısımda anlık istatistiklerimiz var: Toplam URL sayısı, toplam tıklanma ve servis durumu "Sağlıklı" olarak görünüyor.</p>
+<p><strong>[URL KISALT kutusuna <code>https://marmara.edu.tr</code> yaz ve "Kısalt" butonuna bas]</strong></p>
+<p>Şimdi canlı olarak bir URL kısaltıyorum. Marmara Üniversitesi'nin adresini yapıştırıp "Kısalt" butonuna basıyorum. Gördüğünüz gibi sistem bize 6 haneli benzersiz bir kısa kod üretti ve alt taraftaki tabloya düştü.</p>
+<p><strong>[Tablodaki kısa koda tıkla, yeni sekmede marmara.edu.tr açılsın]</strong></p>
+<p>Kısa linkimize tıklıyorum. Gördüğünüz gibi bizi anında Marmara Üniversitesi sitesine yönlendirdi. Bu bir 301 Redirect, yani kalıcı yönlendirmedir.</p>
+<p><strong>[Arayüz sekmesine geri dön, "Yenile" butonuna bas]</strong></p>
+<p>Arayüze geri dönüp yenilediğimde bakın tıklanma sayısı 1 arttı. Sistem her tıklamayı veritabanına kaydedip anlık olarak arayüze yansıtıyor.</p>
+<p><strong>[Terminale geç]</strong></p>
+<p>Şimdi CI/CD pipeline'ımızı tetiklemek için bir Pull Request açıyorum. Terminalde yeni bir dal oluşturuyorum:</p>
+<pre><code class="language-bash">git checkout -b demo/live-feature
+echo &quot;demo canli degisikligi eklendi&quot; &gt;&gt; README.md
+git add README.md
+git commit -m &quot;docs: canli demo güncellemesi&quot;
+git push origin demo/live-feature
+</code></pre>
+<p><strong>[Tarayıcıda GitHub sekmesine geç]</strong></p>
+<p>GitHub'a gidiyorum. Bakın yeşil "Compare &amp; pull request" butonu çıktı. Buna tıklıyorum ve PR'ımı açıyorum.</p>
+<p><strong>[Create pull request butonuna bas]</strong></p>
+<p>PR açıldığı an bakın alt kısımda sarı çarklar dönmeye başladı. GitHub Actions pipeline'ımız otomatik olarak tetiklendi. Lint, Test, Newman, Docker Build aşamaları sırayla koşmaya başlıyor.</p>
+<hr />
+<h2>ADIM 2 — PR MERGE + CD TETİKLEME (2:00 – 3:00)</h2>
+<p><strong>[GitHub PR sayfasında kal]</strong></p>
+<p>Pipeline'ın tamamlanmasını beklerken size akışı anlatayım. Şu an ilk adım olan Lint çalışıyor, flake8 ile PEP-8 uyumluluğu kontrol ediliyor. Ardından Pytest koşacak ve coverage kontrolü yapılacak. Sonra Newman API testleri ve Docker multi-stage build gelecek.</p>
+<p><strong>[Eğer pipeline yeşile döndüyse "Merge pull request" butonuna bas. Dönmediyse aşağıdaki cümleyi söyle:]</strong></p>
+<p>Pipeline devam ediyor ama ben size akışını göstermek için Actions sekmesine geçeyim.</p>
+<p><strong>[Actions sekmesine tıkla, en üstteki workflow'u aç]</strong></p>
+<p>Bakın burada 7 aşamamızı görüyorsunuz: Lint, Test, API Check, Docker Build, K8s Deploy, Smoke Test ve E2E UI. Her biri başarıyla tamamlandığında yeşil tik alıyor. Bu pipeline her push ve pull request'te otomatik tetikleniyor.</p>
+<hr />
+<h2>ADIM 3 — MİNİKUBE DEPLOYMENT KONTROLÜ (3:00 – 4:00)</h2>
+<p><strong>[Terminale geç]</strong></p>
+<p>Kubernetes tarafında deployment durumunu kontrol edelim:</p>
+<pre><code>kubectl get pods
+</code></pre>
+<p>Bakın hocam, url-shortener pod'larımız "Running" durumunda. 2 replika çalışıyor, yani yüksek erişilebilirlik sağlanmış.</p>
+<pre><code>kubectl get svc
+</code></pre>
+<p>Service'imiz de aktif ve ClusterIP üzerinden erişilebilir durumda.</p>
+<p><strong>[Arayüzde Servisler sayfasına geç]</strong></p>
+<p>Arayüzümüzün "Servisler" sayfasından da tüm bileşenlerin durumunu görebiliyoruz. Bakın: FastAPI App, Prometheus, Grafana, LocalStack S3, Jaeger UI — hepsi "Çalışıyor" durumunda. Yani tüm altyapımız sağlıklı.</p>
+<hr />
+<h2>ADIM 4 — GRAFANA METRİKLERİ (4:00 – 5:00)</h2>
+<p><strong>[Tarayıcıda Grafana sekmesine (localhost:3000) geç]</strong></p>
+<p>Şimdi Grafana dashboard'umuza bakalım. Prometheus metrikleri buraya akıyor. 6 adet panelimiz var:</p>
+<p>Üst sırada Toplam URL Sayısı — bakın az önce oluşturduğumuz URL burada sayıya yansıdı. Yanında Toplam Redirect Sayısı — az önce tıkladığımız yönlendirme burada. Aktif URL'ler ve Hata Oranı panellerimiz de var.</p>
+<p>Alt sırada ise p95 Latency ve RPS yani saniyedeki istek sayısı grafikleri var. Bu paneller sayesinde sistemi sadece "çalışıyor mu?" diye değil, "ne kadar iyi çalışıyor?" diye de izleyebiliyoruz.</p>
+<p><strong>[Arayüzde Metrikler sayfasına geç]</strong></p>
+<p>Kendi dashboard'umuzdan da aynı verilere bakabiliriz. Burada Prometheus'un topladığı ham metrikleri ve servis sağlık durumunu anlık olarak görüyorsunuz. Status: healthy, uptime bilgisi ve uygulama metrikleri listelenmiş durumda.</p>
+<hr />
+<h2>ADIM 5 — k6 YÜK TESTİ (5:00 – 6:00)</h2>
+<p><strong>[Terminale geç]</strong></p>
+<p>Şimdi sistemimizin yük altında nasıl davrandığını gösterelim. k6 aracıyla küçük bir load test koşuyorum:</p>
+<pre><code>k6 run perf/load-test.js
+</code></pre>
+<p><strong>[Test koşarken konuş:]</strong></p>
+<p>Bakın şu an sanal kullanıcılar oluşturuluyor ve sisteme eşzamanlı istekler atılıyor. Ekranda yeşil çizgilerle akan her satır başarılı bir HTTP isteğini temsil ediyor.</p>
+<p><strong>[Test bittiğinde sonuç ekranını göster:]</strong></p>
+<p>Test tamamlandı. Sonuçlara bakarsak: p95 latency değerimiz — bakın burada — 87 milisaniye civarında çıktı. Hedefimiz 500 milisaniyenin altıydı, bunu rahat rahat geçtik. Hata oranı da %1'in altında, yani sistem yük altında bile stabil kaldı.</p>
+<p><strong>[Hemen Grafana sekmesine geç]</strong></p>
+<p>Grafana'ya dönersek bakın az önce koştuğumuz yük testinin etkisini panellerde görebiliyoruz. RPS grafiği yükseldi, latency panelinde de trafik altındaki davranışımız gözüküyor.</p>
+<hr />
+<h2>ADIM 6 — PLAYWRIGHT E2E TESTİ (6:00 – 7:00)</h2>
+<p><strong>[Terminale geç]</strong></p>
+<p>Son olarak uçtan uca testimizi canlı koşalım. Playwright ile tarayıcının otomatik açılmasını sağlıyorum:</p>
+<pre><code class="language-bash">PYTHONPATH=. pytest tests/e2e/test_ui.py::TestE2EUrlShortener::test_url_shortening_creates_result --headed --no-cov --timeout=30
+</code></pre>
+<p><strong>[Ellerini klavyeden çek ve ekranı izle]</strong></p>
+<p>Bakın hocam, şu an hiçbir şeye dokunmuyorum. Playwright kendi kendine bir Chromium tarayıcısı açtı, localhost:8000 adresimize gitti, URL kısaltma kutusuna otomatik olarak bir adres yazdı, "Kısalt" butonuna bastı ve sonucun tabloya düştüğünü doğruladı. Tüm bunları bir robot yaptı, ben hiçbir yere tıklamadım.</p>
+<p><strong>[Terminalde yeşil PASSED yazısını göster]</strong></p>
+<p>Ve terminalde gördüğünüz gibi test PASSED, yani başarıyla geçti. Bu, gerçek bir kullanıcının yapacağı akışın otomatik olarak doğrulandığı anlamına geliyor. Her deployment'tan sonra bu testler otomatik koşarak regresyon olmadığını garanti ediyor.</p>
+<hr />
+<h2>KAPANIŞ (7:00)</h2>
+<p><strong>[Arayüzde Ana Sayfa'ya dön]</strong></p>
+<p>Özetlersek hocam: Az önce canlı olarak URL kısalttık, tıklayıp yönlendirmeyi gördük, GitHub'a PR açıp CI/CD pipeline'ını tetikledik, Kubernetes üzerinde pod'ların çalıştığını doğruladık, Grafana'da metrikleri izledik, k6 ile yük testi koşup performansı ölçtük ve son olarak Playwright ile tarayıcıyı robotla test ettik.</p>
+<p>Tüm bu süreçler, yani test, build, deploy ve izleme tamamen otomatize edilmiş durumda. Sorularınızı bekliyoruz.</p>
+<hr />
+<h2>⚠️ YEDEK PLAN (Bir şey bozulursa)</h2>
+<p>Eğer demo sırasında herhangi bir sorun çıkarsa (internet koparsa, Docker çökerse, port çakışırsa) şu cümleyi söyle:</p>
+<blockquote>
+<p>"Hocam şu an lokal ortamda bir port çakışması/bağlantı sorunu yaşıyorum ama bu senaryoların hepsini daha önce test edip kaydetmiştim. GitHub Actions'taki başarılı pipeline kayıtlarından ve raporlarımızdan gösterebilirim."</p>
+</blockquote>
+<p>Sonra GitHub Actions sekmesine geçip daha önceki başarılı bir workflow'u aç ve yeşil tikleri göster.</p>
+<hr />
+<h2>🎯 DEMO ÖNCESİ KONTROL LİSTESİ</h2>
+<p>Sunumdan 10 dakika önce şunları yap:
+- [ ] <code>docker-compose up -d</code> ile tüm servisleri başlat
+- [ ] Tarayıcıda localhost:8000 açılıyor mu? Kontrol et
+- [ ] Tarayıcıda localhost:3000 (Grafana) açılıyor mu?
+- [ ] Tarayıcıda localhost:16686 (Jaeger) açılıyor mu?
+- [ ] Terminal açık mı? Proje klasöründe misin?
+- [ ] GitHub reposu tarayıcıda açık mı?
+- [ ] <code>git checkout main &amp;&amp; git pull</code> yaptın mı?
+- [ ] Eski demo branch'ini sil: <code>git branch -D demo/live-feature &amp;&amp; git push origin --delete demo/live-feature</code></p></body></html>

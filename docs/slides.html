@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>URL Shortener Service — Sunum</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #0a0e17;
+    --bg-card: #111827;
+    --bg-card-hover: #1a2332;
+    --accent: #3b82f6;
+    --accent-light: #60a5fa;
+    --accent-glow: rgba(59, 130, 246, 0.15);
+    --green: #10b981;
+    --red: #ef4444;
+    --orange: #f59e0b;
+    --purple: #8b5cf6;
+    --cyan: #06b6d4;
+    --text-primary: #f1f5f9;
+    --text-secondary: #e2e8f0; /* Biraz daha parlak beyaz metin okumayı kolaylaştırır */
+    --text-muted: #94a3b8;
+    --border: #1e293b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* ── SLIDE CONTAINER ── */
+  .slide-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: none;
+    flex-direction: column;
+    padding: 48px 64px 80px 64px; /* Alttan menüye yer aç */
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    overflow-y: auto; /* Yazı çok olursa scroll çıkar */
+  }
+
+  .slide.active {
+    display: flex;
+    opacity: 1;
+  }
+
+  /* ── NAVIGATION ── */
+  .nav-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 32px;
+    background: rgba(10, 14, 23, 0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    z-index: 100;
+  }
+
+  .nav-bar button {
+    padding: 8px 20px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .nav-bar button:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .nav-bar .slide-counter {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--purple));
+    transition: width 0.4s ease;
+    z-index: 101;
+  }
+
+  /* ── TYPOGRAPHY ── */
+  .slide-number {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+
+  .slide-title {
+    font-size: 38px;
+    font-weight: 800;
+    line-height: 1.15;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .slide-subtitle {
+    font-size: 18px;
+    color: var(--text-muted);
+    margin-bottom: 24px;
+    font-weight: 400;
+  }
+
+  h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--accent-light);
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+
+  /* ── SCRIPT TEXT (Okumak İçin) ── */
+  .script-text {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    background: rgba(17, 24, 39, 0.5);
+    padding: 16px 20px;
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+  }
+  
+  .script-text p {
+    margin-bottom: 12px;
+  }
+  
+  .script-text p:last-child {
+    margin-bottom: 0;
+  }
+
+  .script-text strong {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 4px;
+    border-radius: 4px;
+  }
+
+  /* ── CARDS & GRIDS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; flex: 1; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  /* ── STAT CARDS ── */
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-blue { background: rgba(59,130,246,0.15); color: var(--accent-light); border: 1px solid rgba(59,130,246,0.3); }
+  .badge-green { background: rgba(16,185,129,0.15); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+  .badge-purple { background: rgba(139,92,246,0.15); color: var(--purple); border: 1px solid rgba(139,92,246,0.3); }
+  .badge-orange { background: rgba(245,158,11,0.15); color: var(--orange); border: 1px solid rgba(245,158,11,0.3); }
+  .badge-cyan { background: rgba(6,182,212,0.15); color: var(--cyan); border: 1px solid rgba(6,182,212,0.3); }
+  .badge-red { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+
+  /* ── PIPELINE FLOW ── */
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+    background: var(--bg-card);
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .pipeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 16px;
+    background: var(--bg-primary);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .pipeline-arrow {
+    color: var(--text-muted);
+    font-size: 20px;
+    font-weight: bold;
+  }
+
+  /* ── LIST ── */
+  .feature-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .feature-list li {
+    padding: 8px 0;
+    font-size: 16px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    line-height: 1.5;
+  }
+
+  .feature-list .icon {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    margin-top: 2px;
+  }
+
+  /* ── SCREENSHOT PLACEHOLDER ── */
+  .screenshot-placeholder {
+    background: var(--bg-card);
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: var(--text-muted);
+    font-size: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .screenshot-placeholder img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    position: absolute;
+    top: 0; left: 0;
+  }
+
+  /* ── COVER PAGE ── */
+  .cover-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+  }
+
+  .cover-center .slide-title {
+    font-size: 56px;
+    margin-bottom: 16px;
+  }
+
+  .cover-center .slide-subtitle {
+    font-size: 22px;
+    max-width: 700px;
+    line-height: 1.5;
+  }
+
+  /* ── PYRAMID ── */
+  .pyramid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pyramid-level {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 16px;
+    color: #fff;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+  }
+
+  .pyramid-level.e2e { width: 50%; background: linear-gradient(135deg, #ef4444, #991b1b); }
+  .pyramid-level.integration { width: 75%; background: linear-gradient(135deg, #f59e0b, #b45309); }
+  .pyramid-level.unit { width: 100%; background: linear-gradient(135deg, #10b981, #047857); }
+
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<div class="slide-container" id="slideContainer">
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 1: KAPAK                                           -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide active" data-slide="1">
+    <div class="cover-center">
+      <div class="slide-number">MTH2526 — Bulut Mimarilerinde Test Mühendisliği</div>
+      <h1 class="slide-title">URL Shortener Service</h1>
+      <p class="slide-subtitle" style="color:var(--text-secondary);">
+        Hocam merhabalar. Projemiz MTH2526 dersi kapsamında geliştirdiğimiz URL Shortener Service.
+        Ben Osman Çingöz, takım arkadaşım Talha Ergelen ile birlikte, 
+        Cloud-Native prensipleriyle uçtan uca test edilebilir bir sistem geliştirdik.
+      </p>
+      <div style="display:flex; gap:32px; margin-top:40px; font-size:18px; color:var(--accent-light); font-weight:600;">
+        <span>👤 Talha Ergelen — 171423013</span>
+        <span>👤 Osman Çingöz — 170423029</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 2: PROBLEM & ÇÖZÜM                                 -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="2">
+    <div class="slide-number">Slayt 1</div>
+    <h1 class="slide-title">Problem & Çözüm</h1>
+    
+    <div class="script-text">
+      <p>Buradaki temel problemimiz, uzun URL'lerin paylaşım zorluğu ve kullanıcı tıklama verilerinin analiz edilememesiydi.</p>
+      <p>Bunu çözmek için FastAPI tabanlı bir link kısaltma servisi tasarladık. Ancak projemizin asıl <strong>motivasyonu</strong> sadece bir uygulama yazmak değil; arka planda sağlam bir <strong>Test Pipeline'ı</strong> kurarak güvenilir, test edilebilir ve izlenebilir bir mikroservis altyapısı yaratmaktı.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>🔴 Mevcut Sorunlar</h3>
+        <ul class="feature-list">
+          <li><span class="icon badge-red">✕</span> Uzun URL'ler kırılıyor, paylaşımı zor</li>
+          <li><span class="icon badge-red">✕</span> Tıklanma istatistikleri ölçülemiyor</li>
+          <li><span class="icon badge-red">✕</span> Manuel deploy işlemleri hataya çok açık</li>
+          <li><span class="icon badge-red">✕</span> Regresyon testleri eksik</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>🟢 Çözüm ve Yaklaşımımız</h3>
+        <ul class="feature-list">
+          <li><span class="icon badge-green">✓</span> Hızlı ve asenkron FastAPI altyapısı</li>
+          <li><span class="icon badge-green">✓</span> İzole ve tekrar edilebilir Test Piramidi</li>
+          <li><span class="icon badge-green">✓</span> Otomatize GitHub Actions CI/CD hattı</li>
+          <li><span class="icon badge-green">✓</span> Docker ve Kubernetes (Minikube) ile dağıtım</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 3: MİMARİ DİYAGRAM                                 -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="3">
+    <div class="slide-number">Slayt 2</div>
+    <h1 class="slide-title">Mimari Diyagram</h1>
+    
+    <div class="script-text">
+      <p>Mimarimizin kalbinde <strong>FastAPI</strong> var. Veritabanı tarafında, gerçek dünya senaryosunu simüle etmek için Docker üzerinde koşan bir <strong>PostgreSQL</strong> kullanıyoruz.</p>
+      <p>İstatistik dosyalarımızı AWS S3 mantığıyla depolamak için <strong>LocalStack</strong> entegrasyonu kurduk. Uygulamamızın sağlığını ve metriklerini anlık olarak <strong>Prometheus</strong> ile toplayıp, <strong>Grafana</strong> panellerinde görselleştiriyoruz. Tüm bu sistemi de Docker ile paketleyip <strong>Kubernetes (Minikube)</strong> üzerinde koşturuyoruz.</p>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <h3>Bileşen Dağılımı</h3>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div style="padding:12px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px;">
+            <strong style="color:var(--accent-light);">🌐 API Katmanı:</strong> FastAPI, Python 3.11, OpenAPI 3.1
+          </div>
+          <div style="padding:12px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px;">
+            <strong style="color:var(--green);">🗄️ Veri Katmanı:</strong> PostgreSQL (SQLAlchemy ORM), AWS S3 (LocalStack)
+          </div>
+          <div style="padding:12px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px;">
+            <strong style="color:var(--purple);">📊 Gözlemlenebilirlik (Observability):</strong> Prometheus, Grafana, Jaeger Tracing
+          </div>
+          <div style="padding:12px; background:var(--bg-card); border:1px solid var(--border); border-radius:8px;">
+            <strong style="color:var(--cyan);">☸️ Orkestrasyon:</strong> Kubernetes (Minikube), Docker Compose
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>Sistem Görseli (Arayüzümüz)</h3>
+        <div class="screenshot-placeholder" style="min-height:280px;">
+          <span style="font-size:40px;">🖼️</span>
+          <span>Buraya "Ana Sayfa" veya "Servisler" sayfanızın<br>ekran görüntüsünü yerleştirin.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 4: TEST STRATEJİSİ                                 -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="4">
+    <div class="slide-number">Slayt 3</div>
+    <h1 class="slide-title">Test Stratejisi</h1>
+    
+    <div class="script-text">
+      <p>Test stratejimizde endüstri standardı olan <strong>'Test Piramidi'ni</strong> eksiksiz uyguladık. Toplamda 95 test ve kontrol noktamız var. Şartnamede istenen %70 hedefini fazlasıyla aşarak <strong>%90 kod kapsama (coverage)</strong> oranına ulaştık.</p>
+      <p>Piramidin <strong>tabanında</strong> iş mantığını izole test eden 42 Unit testimiz, <strong>ortasında</strong> Testcontainers ile gerçek veritabanı simülasyonu yaptığımız 39 Entegrasyon testimiz, ve <strong>en tepede</strong> tarayıcıyı ayağa kaldırarak son kullanıcı akışını test eden 5 adet Playwright E2E testimiz yer alıyor.</p>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <div class="pyramid" style="margin-top:16px;">
+          <div class="pyramid-level e2e">🎭 Uçtan Uca (E2E) — 5 Senaryo</div>
+          <div class="pyramid-level integration">🔗 Entegrasyon — 39 Test</div>
+          <div class="pyramid-level unit">🧩 Birim (Unit) — 42 Test</div>
+        </div>
+        <div style="text-align:center; margin-top:16px; font-size:15px; color:var(--text-muted);">
+          *Ayrıca Newman ile koşulan 8 adet Postman API testimiz bulunmaktadır.
+        </div>
+      </div>
+      
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div class="stat-card" style="border-left:4px solid var(--accent);">
+          <div class="stat-value" style="color:var(--accent);">%90</div>
+          <div class="stat-label">Gerçekleşen Kod Kapsamı (Coverage)</div>
+          <div style="font-size:12px; color:var(--red); margin-top:8px;">%70 altına düşerse pipeline bilerek hata verir.</div>
+        </div>
+        
+        <div class="card">
+          <ul class="feature-list">
+            <li><span class="badge badge-green">Unit</span> pytest, Factory Boy, Faker kütüphaneleri. S3 servisleri Mock'landı.</li>
+            <li><span class="badge badge-orange">Integration</span> <strong>Testcontainers</strong> kullanılarak izole Docker PostgreSQL ayağa kaldırılıp test edildi.</li>
+            <li><span class="badge badge-red">E2E</span> <strong>Playwright</strong> kullanılarak Chromium tarayıcı üzerinden canlı UI testleri.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 5: CI/CD PIPELINE                                   -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="5">
+    <div class="slide-number">Slayt 4</div>
+    <h1 class="slide-title">CI/CD Pipeline & Deploy Stratejisi</h1>
+    
+    <div class="script-text">
+      <p>Tüm bu test süreçlerini <strong>GitHub Actions</strong> ile 7 aşamalı ve tam otomatize bir CI/CD pipeline'ına bağladık. Biz repoya kodu yolladığımız anda süreç başlar.</p>
+      <p>Önce Lint ile kod kalitesi ölçülür. Ardından tüm testler koşulur ve coverage kontrol edilir. Testler geçerse Multi-stage Docker imajımız sıfırdan build edilip Minikube üzerine deploy edilir. Ardından Smoke test ve Playwright E2E UI testleri çalışarak deployment'ın doğruluğunu son kez canlı sistem üzerinde kanıtlar.</p>
+    </div>
+
+    <div class="pipeline">
+      <div class="pipeline-step" style="border-color:var(--purple);">1. Lint<br><span style="color:var(--text-muted); font-size:12px; font-weight:400;">flake8</span></div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step" style="border-color:var(--green);">2. Test<br><span style="color:var(--text-muted); font-size:12px; font-weight:400;">pytest + cov</span></div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step" style="border-color:var(--orange);">3. API Test<br><span style="color:var(--text-muted); font-size:12px; font-weight:400;">newman</span></div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step" style="border-color:var(--cyan);">4. Build<br><span style="color:var(--text-muted); font-size:12px; font-weight:400;">Docker</span></div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step" style="border-color:var(--accent);">5. Deploy<br><span style="color:var(--text-muted); font-size:12px; font-weight:400;">Minikube</span></div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step" style="border-color:var(--green);">6. Smoke<br><span style="color:var(--text-muted); font-size:12px; font-weight:400;">curl /health</span></div>
+      <span class="pipeline-arrow">→</span>
+      <div class="pipeline-step" style="border-color:var(--red);">7. E2E UI<br><span style="color:var(--text-muted); font-size:12px; font-weight:400;">Playwright</span></div>
+    </div>
+
+    <div class="grid-2" style="margin-top:20px;">
+      <div class="card">
+        <h3>Deploy Stratejisi</h3>
+        <ul class="feature-list">
+          <li><strong>Multi-stage Docker:</strong> Sadece ~150MB'lık optimize ve güvenli imaj.</li>
+          <li><strong>Kubernetes Apply:</strong> Minikube üzerinde ConfigMap, Secret, Deployment ve Service yaml manifestoları.</li>
+          <li><strong>Rollback Güvencesi:</strong> E2E testi K8s ayağa kalktıktan sonra koşulur.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="screenshot-placeholder" style="min-height:180px;">
+          <span style="font-size:32px;">✅</span>
+          <span>GitHub Actions Pipeline<br>Başarı Ekran Görüntüsü</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 6: MONITORING & OBSERVABILITY                      -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="6">
+    <div class="slide-number">Slayt 5</div>
+    <h1 class="slide-title">Monitoring & Observability</h1>
+    
+    <div class="script-text">
+      <p>Sistemimizin gözlemlenebilirliğini sağlamak için <strong>Prometheus ve Grafana</strong> entegrasyonu yaptık. Prometheus FastAPI'nin `/metrics` ucundan ham verileri çekerken, Grafana bunları görselleştiriyor.</p>
+      <p>Grafana panellerimizde sistemdeki toplam URL sayısı, aktif URL'ler, hata oranları, saniyedeki istek hızı (RPS) ve p95 gecikme süreleri anlık olarak izleniyor. Ek olarak OpenTelemetry ve <strong>Jaeger</strong> kullanarak dağıtık sistem izlemesi (tracing) sağladık.</p>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3>Grafana Panelleri (Örnekler)</h3>
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border);">
+            <strong style="color:var(--accent-light);">Toplam URL Sayısı</strong>
+            <span style="color:var(--text-muted);">Sistemdeki genel büyüme</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border);">
+            <strong style="color:var(--green);">Toplam Redirect</strong>
+            <span style="color:var(--text-muted);">Kullanım yoğunluğu</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:12px; border-bottom:1px solid var(--border);">
+            <strong style="color:var(--red);">Hata Oranı (404/5xx)</strong>
+            <span style="color:var(--text-muted);">Sistem sağlığı ve alarmlar</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; padding:12px;">
+            <strong style="color:var(--purple);">p95 Latency & RPS</strong>
+            <span style="color:var(--text-muted);">Performans darboğaz tespiti</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div class="screenshot-placeholder" style="min-height:160px;">
+          <span style="font-size:24px;">📈</span>
+          <span>Grafana Dashboard Ekran Görüntüsü</span>
+        </div>
+        <div class="screenshot-placeholder" style="min-height:160px;">
+          <span style="font-size:24px;">🔭</span>
+          <span>Jaeger Traces Ekran Görüntüsü</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 7: SAYILAR                                          -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="7">
+    <div class="slide-number">Slayt 6</div>
+    <h1 class="slide-title">Rakamlarla Proje Çıktıları</h1>
+    
+    <div class="script-text">
+      <p>Sayısal verilerimize baktığımızda, k6 aracı ile yaptığımız 4 fazlı performans testlerinde 100 eşzamanlı sanal kullanıcıyla sistemi yorduk.</p>
+      <p>Hedefimiz 500ms'nin altındayken, <strong>p95 gecikmemiz (latency) sadece 87 milisaniye</strong> çıktı. Toplam 15 bin istek atılmasına rağmen <strong>hata oranımız %0.4</strong> gibi çok düşük bir seviyede kaldı. Bu da mimarimizin ne kadar dayanıklı olduğunu kanıtlamaktadır.</p>
+    </div>
+
+    <div class="grid-4" style="margin-top:20px;">
+      <div class="stat-card" style="border-bottom:4px solid var(--green);">
+        <div class="stat-value" style="color:var(--green);">95</div>
+        <div class="stat-label" style="margin-bottom:8px;">Toplam Test Sayısı</div>
+        <span class="badge badge-green" style="font-size:10px;">42 Unit + 39 Int + 5 E2E + 8 API + 1 k6</span>
+      </div>
+      
+      <div class="stat-card" style="border-bottom:4px solid var(--accent);">
+        <div class="stat-value" style="color:var(--accent);">%90</div>
+        <div class="stat-label" style="margin-bottom:8px;">Kod Kapsamı (Coverage)</div>
+        <span class="badge badge-blue" style="font-size:10px;">Hedeflenen: %70</span>
+      </div>
+      
+      <div class="stat-card" style="border-bottom:4px solid var(--purple);">
+        <div class="stat-value" style="color:var(--purple);">87<span style="font-size:18px;">ms</span></div>
+        <div class="stat-label" style="margin-bottom:8px;">p95 Latency</div>
+        <span class="badge badge-purple" style="font-size:10px;">100 Kullanıcı, 15K İstek</span>
+      </div>
+      
+      <div class="stat-card" style="border-bottom:4px solid var(--orange);">
+        <div class="stat-value" style="color:var(--orange);">~3<span style="font-size:18px;">dk</span></div>
+        <div class="stat-label" style="margin-bottom:8px;">Ortalama Build & Deploy Süresi</div>
+        <span class="badge badge-orange" style="font-size:10px;">Sıfırdan Canlıya (GitHub Actions)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 8: ÖĞRENDİKLERİM & ZORLUKLAR                       -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="8">
+    <div class="slide-number">Slayt 7</div>
+    <h1 class="slide-title">Öğrendiklerim & Zorluklar</h1>
+    
+    <div class="script-text">
+      <p>Bu proje boyunca modern yazılım mühendisliğinin birçok yüzleşmesiyle karşılaştık. İşte en çok zorlandığımız noktalar ve en hatırda kalan öğrendiklerimiz.</p>
+    </div>
+
+    <div class="grid-2">
+      <div>
+        <h3 style="color:var(--red);">🧗 Karşılaştığımız Zorluklar</h3>
+        <ul class="feature-list" style="margin-top:16px;">
+          <li>
+            <div style="background:var(--bg-card); padding:16px; border-left:3px solid var(--red); border-radius:8px; width:100%;">
+              <strong style="display:block; margin-bottom:8px; color:var(--text-primary);">1. Testcontainers & Docker-in-Docker</strong>
+              <span style="font-size:14px;">CI/CD sunucusunda PostgreSQL container'ı ayağa kaldırmak network ve yetki sorunlarına yol açtı. Service Container mantığıyla çözdük.</span>
+            </div>
+          </li>
+          <li>
+            <div style="background:var(--bg-card); padding:16px; border-left:3px solid var(--orange); border-radius:8px; width:100%;">
+              <strong style="display:block; margin-bottom:8px; color:var(--text-primary);">2. OpenTelemetry Network Sorunu</strong>
+              <span style="font-size:14px;">Jaeger endpoint'inin localhost'a kodlanması, Docker ortamında iletişimsizliğe sebep oldu. Çevre değişkenleriyle dinamik hale getirdik.</span>
+            </div>
+          </li>
+          <li>
+            <div style="background:var(--bg-card); padding:16px; border-left:3px solid var(--cyan); border-radius:8px; width:100%;">
+              <strong style="display:block; margin-bottom:8px; color:var(--text-primary);">3. E2E Test Tarayıcı Bağımlılıkları</strong>
+              <span style="font-size:14px;">Playwright testlerinin CI ortamında WebKit gibi bağımlılıkları bulamaması sebebiyle özel headless konfigürasyonları yazdık.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 style="color:var(--green);">💡 Çıkardığımız Dersler</h3>
+        <ul class="feature-list" style="margin-top:16px;">
+          <li>
+            <div style="background:var(--bg-card); padding:16px; border-left:3px solid var(--green); border-radius:8px; width:100%;">
+              <strong style="display:block; margin-bottom:8px; color:var(--text-primary);">1. Test Piramidi Kesinlikle İşe Yarıyor</strong>
+              <span style="font-size:14px;">Katmanların birbirini tamamlaması (hız için Unit, güven için E2E) sistemin kalitesini dramatik ölçüde artırdı.</span>
+            </div>
+          </li>
+          <li>
+            <div style="background:var(--bg-card); padding:16px; border-left:3px solid var(--green); border-radius:8px; width:100%;">
+              <strong style="display:block; margin-bottom:8px; color:var(--text-primary);">2. CI/CD Yoksa Güven de Yok</strong>
+              <span style="font-size:14px;">Her push'ta otomatik kalite kontrolünün sağlanması, kodu bozma korkusunu tamamen ortadan kaldırdı.</span>
+            </div>
+          </li>
+          <li>
+            <div style="background:var(--bg-card); padding:16px; border-left:3px solid var(--green); border-radius:8px; width:100%;">
+              <strong style="display:block; margin-bottom:8px; color:var(--text-primary);">3. Observability Bir Lüks Değil</strong>
+              <span style="font-size:14px;">Sistemin içini görebilmek, oluşan bir hatanın kaynağını saatler yerine saniyeler içinde bulmamızı sağladı.</span>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- SLIDE 9: TEŞEKKÜRLER                                      -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="slide" data-slide="9">
+    <div class="cover-center">
+      <div class="slide-number">Son</div>
+      <h1 class="slide-title">Teşekkürler 🙏</h1>
+      <p class="slide-subtitle" style="color:var(--text-secondary);">
+        Sunumumuz bu kadardı. Dinlediğiniz için teşekkür ederiz. 
+        Varsa sorularınızı yanıtlayabilir veya Canlı Demo aşamasına geçebiliriz.
+      </p>
+      
+      <div class="cover-meta" style="margin-top:32px;">
+        <span style="padding:12px 24px; background:var(--bg-card); border:1px solid var(--border); border-radius:12px; color:var(--accent-light);">
+          🔗 github.com/talhaergelen/bmtm-url_shortener_service
+        </span>
+      </div>
+
+      <div style="margin-top:40px; display:flex; gap:16px; flex-wrap:wrap; justify-content:center;">
+        <span class="badge badge-blue" style="font-size:14px; padding:10px 18px;">FastAPI</span>
+        <span class="badge badge-green" style="font-size:14px; padding:10px 18px;">Pytest</span>
+        <span class="badge badge-orange" style="font-size:14px; padding:10px 18px;">Testcontainers</span>
+        <span class="badge badge-red" style="font-size:14px; padding:10px 18px;">Playwright</span>
+        <span class="badge badge-cyan" style="font-size:14px; padding:10px 18px;">Docker & K8s</span>
+        <span class="badge badge-purple" style="font-size:14px; padding:10px 18px;">Grafana & Jaeger</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── NAVIGATION BAR ── -->
+<div class="nav-bar">
+  <button onclick="prevSlide()">← Önceki</button>
+  <span class="slide-counter" id="slideCounter">1 / 9</span>
+  <button onclick="nextSlide()">Sonraki →</button>
+</div>
+
+<script>
+  let currentSlide = 1;
+  const totalSlides = 9;
+
+  function showSlide(n) {
+    document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+    const target = document.querySelector(`[data-slide="${n}"]`);
+    if (target) {
+      target.classList.add('active');
+      currentSlide = n;
+      document.getElementById('slideCounter').textContent = `${n} / ${totalSlides}`;
+      document.getElementById('progressBar').style.width = `${(n / totalSlides) * 100}%`;
+    }
+  }
+
+  function nextSlide() { if (currentSlide < totalSlides) showSlide(currentSlide + 1); }
+  function prevSlide() { if (currentSlide > 1) showSlide(currentSlide - 1); }
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { e.preventDefault(); nextSlide(); }
+    if (e.key === 'ArrowLeft' || e.key === 'Backspace') { e.preventDefault(); prevSlide(); }
+    if (e.key === 'Home') { e.preventDefault(); showSlide(1); }
+    if (e.key === 'End') { e.preventDefault(); showSlide(totalSlides); }
+    // Fullscreen with F
+    if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  });
+
+  // Touch support for mobile
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) { diff > 0 ? nextSlide() : prevSlide(); }
+  });
+
+  showSlide(1);
+</script>
+
+</body>
+</html>

@@ -97,7 +97,8 @@ def browser_context(test_server):
         from playwright.sync_api import sync_playwright
         
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
+            # slow_mo=1000 ile robotun hareketlerini bilerek yavaşlatıyoruz ki izlenebilsin
+            browser = p.chromium.launch(headless=False, slow_mo=1000)
             context = browser.new_context()
             yield context
             context.close()
@@ -175,6 +176,9 @@ class TestE2EUrlShortener:
         
         assert short_url_value, "Kısa URL boş olmamalı"
         assert "http" in short_url_value, "Kısa URL 'http' içermeli"
+        
+        # Hocanın görebilmesi için testi kapatmadan önce 3 saniye bekle
+        page.wait_for_timeout(3000)
 
     # SENARYO 3
     def test_invalid_url_shows_error(self, page, test_server):

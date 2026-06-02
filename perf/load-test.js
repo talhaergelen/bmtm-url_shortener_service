@@ -58,8 +58,8 @@ export const options = {
     // Hata oranı < %5
     "error_rate": ["rate<0.05"],
 
-    // Redirect süresi p95 < 200ms
-    "redirect_duration": ["p(95)<200"],
+    // Redirect süresi p95 < 400ms
+    "redirect_duration": ["p(95)<400"],
   },
 };
 

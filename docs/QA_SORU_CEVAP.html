@@ -1,0 +1,320 @@
+<!DOCTYPE html><html lang="tr"><head><meta charset="UTF-8"><title>❓ Soru-Cevap Hazırlık Rehberi</title><style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap");
+@page { size: A4; margin: 2cm 2.5cm; }
+@media print { body { -webkit-print-color-adjust: exact; } h2 { page-break-after: avoid; } pre { page-break-inside: avoid; } }
+body { font-family: "Inter", -apple-system, sans-serif; font-size: 13px; line-height: 1.75; color: #1e293b; background: #fff; max-width: 750px; margin: 0 auto; padding: 32px; }
+h1 { font-size: 26px; font-weight: 800; color: #0f172a; border-bottom: 3px solid #3b82f6; padding-bottom: 8px; margin-top: 32px; margin-bottom: 16px; }
+h2 { font-size: 18px; font-weight: 700; color: #1e40af; margin-top: 28px; margin-bottom: 12px; padding: 8px 14px; background: #eff6ff; border-left: 5px solid #3b82f6; border-radius: 0 8px 8px 0; }
+h3 { font-size: 14px; font-weight: 700; color: #dc2626; margin-top: 22px; margin-bottom: 8px; padding: 6px 10px; background: #fef2f2; border-left: 4px solid #ef4444; border-radius: 0 6px 6px 0; }
+p { margin-bottom: 10px; }
+strong { color: #0f172a; background: #fef3c7; padding: 1px 5px; border-radius: 3px; }
+blockquote { background: #f0fdf4; border-left: 4px solid #22c55e; padding: 12px 16px; margin: 14px 0; border-radius: 0 8px 8px 0; font-size: 12px; color: #166534; }
+code { font-family: "SF Mono","Fira Code",monospace; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 11px; color: #dc2626; }
+pre { background: #1e293b; color: #e2e8f0; padding: 14px 18px; border-radius: 8px; font-size: 11px; line-height: 1.6; overflow-x: auto; margin: 12px 0; }
+pre code { background: none; color: #e2e8f0; padding: 0; }
+hr { border: none; border-top: 2px solid #e2e8f0; margin: 22px 0; }
+ul, ol { margin-bottom: 12px; padding-left: 24px; }
+li { margin-bottom: 5px; }
+table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 12px; }
+th { background: #1e40af; color: white; padding: 8px 12px; text-align: left; font-weight: 600; }
+td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+tr:nth-child(even) td { background: #f8fafc; }
+.doc-header { text-align: center; padding: 24px; margin-bottom: 24px; background: linear-gradient(135deg, #dc2626 0%, #7c3aed 100%); color: white; border-radius: 12px; }
+.doc-header h1 { color: white; border: none; font-size: 26px; margin: 0 0 8px 0; padding: 0; }
+.doc-header p { color: #fecaca; margin: 0; text-align: center; font-size: 14px; }
+</style></head><body><div class="doc-header"><h1>❓ Soru-Cevap Hazırlık Rehberi</h1><p>URL Shortener Service — Q&A Soruları ve Cevapları</p></div><h1>SORU-CEVAP HAZIRLIK REHBERİ (Q&amp;A — 3 Dakika)</h1>
+<h2>Hocanın Sorabileceği TÜM Sorular ve Cevaplar</h2>
+<blockquote>
+<p>Bu doküman, sunumdan SONRA gelen Soru-Cevap bölümü için hazırlanmıştır.
+Hoca rastgele <strong>kod satırı</strong>, <strong>mimari karar</strong> veya <strong>operasyonel senaryo</strong> sorabilir.
+Aşağıdaki sorular gerçek projenizin koduna dayanmaktadır. Cevapları ezberlemeyin, <strong>anlayın</strong>.</p>
+</blockquote>
+<hr />
+<h2>BÖLÜM 1 — "Bu Kod Satırı Ne Yapıyor?"</h2>
+<h3>Soru 1: <code>shortener.py</code> dosyasındaki <code>generate_short_code()</code> fonksiyonu ne yapıyor?</h3>
+<p><strong>Kod (shortener.py, Satır 30-40):</strong></p>
+<pre><code class="language-python">ALPHABET = string.ascii_letters + string.digits  # 62 karakter (a-z, A-Z, 0-9)
+CODE_LENGTH = 6
+
+def generate_short_code() -&gt; str:
+    return &quot;&quot;.join(secrets.choice(ALPHABET) for _ in range(CODE_LENGTH))
+</code></pre>
+<p><strong>Cevap:</strong>
+Bu fonksiyon, büyük/küçük harfler ve rakamlardan oluşan 62 karakterlik bir alfabe tanımlıyor. Bu alfabeden rastgele 6 karakter seçerek kısa kod üretiyor. 62 üzeri 6 kuvveti yaklaşık 56 milyar farklı kombinasyon demektir, dolayısıyla çakışma olasılığı son derece düşük.</p>
+<p>Önemli nokta: <code>random.choice()</code> yerine <code>secrets.choice()</code> kullandık. Bunun nedeni; <code>random</code> modülü tahmin edilebilir sonuçlar üretebilirken, <code>secrets</code> modülü işletim sisteminin kriptografik rasgele sayı üreticisini kullandığından çok daha güvenlidir.</p>
+<hr />
+<h3>Soru 2: <code>generate_unique_short_code()</code> neden döngü kullanıyor?</h3>
+<p><strong>Kod (shortener.py, Satır 43-61):</strong></p>
+<pre><code class="language-python">def generate_unique_short_code(db: Session) -&gt; str:
+    while True:
+        code = generate_short_code()
+        existing = db.query(models.URL).filter(models.URL.short_code == code).first()
+        if not existing:
+            return code
+</code></pre>
+<p><strong>Cevap:</strong>
+Üretilen kod veritabanında zaten kayıtlıysa çakışma (collision) olur ve iki farklı URL aynı kısa koda sahip olurdu. Bu yüzden her üretilen kodu önce veritabanında aratıyoruz. Eğer yoksa kullanıyoruz, varsa yeni bir tane üretiyoruz. 56 milyar ihtimal olduğu için bu döngü pratikte yalnızca bir kere dönecektir.</p>
+<hr />
+<h3>Soru 3: <code>main.py</code>'daki <code>@app.middleware("http")</code> ne yapıyor?</h3>
+<p><strong>Kod (main.py, Satır 177-199):</strong></p>
+<pre><code class="language-python">@app.middleware(&quot;http&quot;)
+async def metrics_middleware(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    duration = time.time() - start_time
+    REQUEST_DURATION.labels(
+        method=request.method,
+        endpoint=request.url.path
+    ).observe(duration)
+    return response
+</code></pre>
+<p><strong>Cevap:</strong>
+Middleware, her HTTP isteği geldiğinde otomatik olarak devreye giren bir katmandır. Sanki bir stoper gibi çalışır: istek geldiğinde zamanı başlatır, yanıt gönderilince durdurur ve geçen süreyi Prometheus'un <code>REQUEST_DURATION</code> histogram metriğine kaydeder. Bu sayede Grafana'da p95 latency gibi istatistikleri görebiliyoruz.</p>
+<hr />
+<h3>Soru 4: <code>@app.get("/metrics")</code> neden <code>@app.get("/{short_code}")</code>'dan ÖNCE tanımlandı?</h3>
+<p><strong>Kod (main.py, Satır 283-299):</strong></p>
+<pre><code class="language-python"># ⚠️ ÖNEMLI: Bu route /{short_code}'dan ÖNCE tanımlanmalı!
+@app.get(&quot;/metrics&quot;, tags=[&quot;Sistem&quot;])
+def prometheus_metrics():
+    ...
+
+@app.get(&quot;/{short_code}&quot;, tags=[&quot;URL&quot;])  # Catch-all route
+def redirect_to_url(short_code: str, ...):
+    ...
+</code></pre>
+<p><strong>Cevap:</strong>
+FastAPI, URL eşleştirmesini <strong>yukarıdan aşağıya</strong> sırayla yapar. <code>/{short_code}</code> bir "catch-all" yani herkesi yakalayan bir route'tur. Eğer <code>/metrics</code> route'u bunun altına yazılsaydı, <code>/metrics</code> isteği geldiğinde sistem "metrics" kelimesini bir <code>short_code</code> olarak yorumlayacak ve veritabanında arayacaktı. <code>/metrics</code>'i üste yazarak bu problemi önledik.</p>
+<hr />
+<h3>Soru 5: <code>redirect_to_url()</code> fonksiyonu HTTP 301 mi 302 mi döndürüyor ve neden?</h3>
+<p><strong>Kod (main.py, Satır 335):</strong></p>
+<pre><code class="language-python">return RedirectResponse(url=db_url.original_url, status_code=301)
+</code></pre>
+<p><strong>Cevap:</strong>
+<strong>HTTP 301 — Kalıcı Yönlendirme</strong> kullanıyoruz. 301 ile tarayıcı bu yönlendirmeyi önbelleğe (cache) alır; aynı kısa linke tekrar tıklandığında sunucuya tekrar istek atmadan doğrudan gider. Bu hem performans açısından avantajlıdır hem de URL kısaltma servisinin doğasına uygundur çünkü kısa kodlar kalıcıdır, değişmez. 302 geçici yönlendirme olduğu için önbelleğe alınmaz.</p>
+<hr />
+<h3>Soru 6: <code>lifespan</code> fonksiyonu ne zaman çalışır?</h3>
+<p><strong>Kod (main.py, Satır 64-92):</strong></p>
+<pre><code class="language-python">@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Başlarken
+    models.Base.metadata.create_all(bind=engine)
+    ensure_bucket_exists()
+    yield  # &lt;-- Uygulama burada çalışır
+    # Kapanırken
+    logger.info(&quot;🛑 Servis kapatılıyor...&quot;)
+</code></pre>
+<p><strong>Cevap:</strong>
+<code>lifespan</code> fonksiyonu uygulama başlarken ve kapanırken bir kez çalışan başlatma ve temizlik kodudur. <code>yield</code> keyword'ünden önceki kısım uygulama ayağa kalkarken, sonraki kısım kapanırken çalışır. Burada veritabanı tablolarını oluşturuyor ve S3 bucket'ını hazırlıyoruz. Bu sayede her istekte tekrar tekrar bu işlemleri yapmıyoruz.</p>
+<hr />
+<h2>BÖLÜM 2 — "Dockerfile'da Neden Multi-Stage Kullandın?"</h2>
+<h3>Soru 7: Multi-stage build nedir, neden kullandınız?</h3>
+<p><strong>Kod (Dockerfile, Satır 1-70):</strong></p>
+<pre><code class="language-dockerfile"># AŞAMA 1: Bağımlılıkları kur
+FROM python:3.11-slim AS builder
+RUN pip install --prefix=/install -r requirements.txt
+
+# AŞAMA 2: Sadece çalışmak için gereken şeyler
+FROM python:3.11-slim AS runtime
+COPY --from=builder /install /usr/local  # builder'dan paketleri al
+COPY src/ ./src/
+</code></pre>
+<p><strong>Cevap:</strong>
+Multi-stage build'de Docker imajı birden fazla aşamada oluşturulur. İlk aşamada (<code>builder</code>) Python paketleri indirilip kurulur. İkinci aşamada (<code>runtime</code>) temiz bir Python ortamı başlatılır ve yalnızca çalışmak için gereken dosyalar kopyalanır: pip, derleyiciler, geliştirme araçları gibi gereksiz şeyler son imajda yer almaz.</p>
+<p>Sonuç: Tek aşamalı bir imaj 800MB olabilirken, bizim imajımız yalnızca ~150MB'tır. Daha küçük imaj demek daha hızlı indirme, daha az saldırı yüzeyi ve daha az güvenlik açığı demektir.</p>
+<hr />
+<h3>Soru 8: <code>USER appuser</code> satırı neden var?</h3>
+<p><strong>Kod (Dockerfile, Satır 36, 53):</strong></p>
+<pre><code class="language-dockerfile">RUN useradd --create-home --shell /bin/bash appuser
+USER appuser
+</code></pre>
+<p><strong>Cevap:</strong>
+Güvenlik prensibi olarak konteynerler root kullanıcı olarak çalışmamalıdır. Eğer bir saldırgan konteyner içine girmeyi başarırsa ve konteyner root olarak çalışıyorsa, host sisteme de zarar verebilir. <code>appuser</code> gibi kısıtlı yetkili bir kullanıcı oluşturup ona geçmek, bu riski minimize eder. Bu Docker'ın "least privilege" (en az yetki) güvenlik prensibinin uygulamasıdır.</p>
+<hr />
+<h3>Soru 9: <code>HEALTHCHECK</code> satırı ne işe yarar?</h3>
+<p><strong>Kod (Dockerfile, Satır 62-63):</strong></p>
+<pre><code class="language-dockerfile">HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c &quot;import urllib.request; urllib.request.urlopen('http://localhost:8000/health')&quot;
+</code></pre>
+<p><strong>Cevap:</strong>
+Docker'ın yerleşik sağlık kontrol mekanizmasıdır. Her 30 saniyede bir <code>/health</code> endpoint'ine istek atarak konteynerin hala çalışıp çalışmadığını kontrol eder. 3 kez üst üste başarısız olursa konteyneri "unhealthy" olarak işaretler. Kubernetes de bu bilgiyi kullanarak sağlıksız pod'ları otomatik olarak yeniden başlatabilir.</p>
+<hr />
+<h2>BÖLÜM 3 — "Coverage Neden Buradan Düşük?"</h2>
+<h3>Soru 10: Test coverage neden %100 değil de %90?</h3>
+<p><strong>Cevap:</strong>
+%100 coverage her zaman doğru hedef değildir. Bizim durumumuzda bazı kod blokları kasıtlı olarak test edilmemiştir:</p>
+<ol>
+<li><strong>Hata yönetimi kodları (except blokları):</strong> LocalStack'in olmadığı senaryolardaki <code>except: pass</code> blokları gibi kenar durumlar. Bunları test etmek için LocalStack'i bilerek bozulan bir ortamda çalıştırmak gerekir ki bu fazla maliyetlidir.</li>
+<li><strong>Startup/shutdown kodu:</strong> <code>lifespan</code> fonksiyonunun bazı dalları, entegrasyon testi ortamında farklı davranır.</li>
+<li><strong>Güvenli taraf:</strong> %70 şartname minimum'u, %90 ise sağlam bir üretim standardıdır. Kalan %10 kritik iş mantığı değil, hata yollarıdır.</li>
+</ol>
+<hr />
+<h2>BÖLÜM 4 — "Deploy Çökerse Rollback Nasıl Yapılır?"</h2>
+<h3>Soru 11: Kubernetes'te rollback nasıl yapılır?</h3>
+<p><strong>Cevap:</strong></p>
+<p>Kubernetes'te rollback için birkaç yöntem var:</p>
+<p><strong>Yöntem 1 — Hızlı Rollback (1 komut):</strong></p>
+<pre><code class="language-bash">kubectl rollout undo deployment/url-shortener
+</code></pre>
+<p>Bu komut önceki versiyona anında geri döner. Kubernetes tüm pod'ları eski imajla yeniden başlatır.</p>
+<p><strong>Yöntem 2 — Belirli bir versiyona rollback:</strong></p>
+<pre><code class="language-bash">kubectl rollout history deployment/url-shortener  # Geçmişi gör
+kubectl rollout undo deployment/url-shortener --to-revision=2  # 2. versiyona dön
+</code></pre>
+<p><strong>Biz bunu nasıl fark ederiz?</strong>
+Grafana'da hata oranı veya p95 latency anormal artarsa, Prometheus alerting ile anında haberdar olabiliriz. Kubernetes'in readiness probe'u başarısız olan pod'lara trafik yönlendirmeyi zaten durdurur.</p>
+<hr />
+<h3>Soru 12: CI/CD pipeline'da bir adım başarısız olursa ne olur?</h3>
+<p><strong>Cevap:</strong></p>
+<p>GitHub Actions'ta her job <code>needs:</code> bağımlılığıyla sıralanmıştır. Bir job başarısız olduğunda bağımlı tüm sonraki joblar otomatik olarak iptal edilir.</p>
+<p>Örneğin:
+- <strong>Test jobı başarısız olursa</strong> → Docker build, K8s deploy, Smoke test, E2E hepsi iptal edilir. Hatalı kod hiçbir zaman canlıya çıkmaz.
+- <strong>Smoke test başarısız olursa</strong> → E2E iptal edilir, bize bildirim gelir.</p>
+<p>Bu sayede pipeline bir "kalite kapısı" (quality gate) gibi davranır. Her aşama bir sonrakine ancak başarı durumunda geçer.</p>
+<hr />
+<h3>Soru 13: Testcontainers nedir, neden kullandınız?</h3>
+<p><strong>Cevap:</strong></p>
+<p>Testcontainers, test sırasında Docker konteynerleri ayağa kaldıran bir Python/Java kütüphanesidir. Biz entegrasyon testlerimizde şöyle kullanıyoruz:</p>
+<pre><code class="language-python"># tests/conftest.py
+with PostgreSQLContainer(&quot;postgres:15&quot;) as pg:
+    # Test için gerçek PostgreSQL başlat
+    engine = create_engine(pg.get_connection_url())
+    # Testleri çalıştır
+    # Test bitince konteyner otomatik silinir
+</code></pre>
+<p><strong>Neden SQLite değil?</strong>
+SQLite, üretim ortamında kullandığımız PostgreSQL ile davranışsal farklar gösterebilir. Örneğin concurrent write (eşzamanlı yazma) lock'ları SQLite'ta farklı çalışır. Testcontainers sayesinde CI ortamında da birebir üretim veritabanıyla test ediyoruz.</p>
+<hr />
+<h2>BÖLÜM 5 — MİMARİ SAVUNMA SORULARI</h2>
+<h3>Soru 14: Neden SQLAlchemy ORM kullandınız, direkt SQL yazabilirdiniz?</h3>
+<p><strong>Cevap:</strong></p>
+<p>ORM (Object-Relational Mapping) kullanmanın birkaç avantajı var:</p>
+<ol>
+<li><strong>Veritabanı bağımsızlığı:</strong> Geliştirmede SQLite, testte ve üretimde PostgreSQL kullanıyoruz. ORM sayesinde sorgu kodu değişmiyor, sadece bağlantı string'i değişiyor.</li>
+<li><strong>SQL Injection güvenliği:</strong> ORM parametreleri otomatik olarak escape eder, manuel SQL'de bu riski göz ardı etmek kolaydır.</li>
+<li><strong>Hız:</strong> Basit CRUD operasyonları için ORM, raw SQL yazmaktan çok daha hızlıdır.</li>
+</ol>
+<hr />
+<h3>Soru 15: Prometheus metrikleri nasıl tanımlandı?</h3>
+<p><strong>Kod (src/metrics.py):</strong></p>
+<pre><code class="language-python">from prometheus_client import Counter, Histogram, Gauge
+
+URL_CREATED_TOTAL = Counter(
+    &quot;url_shortener_urls_created_total&quot;,
+    &quot;Toplam oluşturulan URL sayısı&quot;
+)
+
+URL_REDIRECTS_TOTAL = Counter(
+    &quot;url_shortener_redirects_total&quot;,
+    &quot;Toplam yönlendirme sayısı&quot;,
+    labelnames=[&quot;short_code&quot;]
+)
+
+REQUEST_DURATION = Histogram(
+    &quot;http_request_duration_seconds&quot;,
+    &quot;HTTP istek süresi&quot;,
+    labelnames=[&quot;method&quot;, &quot;endpoint&quot;]
+)
+
+ACTIVE_URLS_GAUGE = Gauge(
+    &quot;url_shortener_active_urls&quot;,
+    &quot;Şu an aktif URL sayısı&quot;
+)
+</code></pre>
+<p><strong>Cevap:</strong>
+Prometheus'un 4 temel metrik tipini kullandık:</p>
+<ul>
+<li><strong>Counter:</strong> Sadece artar, hiç sıfırlanmaz. Toplam URL sayısı ve redirect sayısı için kullandık.</li>
+<li><strong>Histogram:</strong> Değerlerin dağılımını ölçer. İstek süresi için kullandık; p50, p95, p99 gibi persentil değerleri buradan hesaplanır.</li>
+<li><strong>Gauge:</strong> Artıp azalabilir. Şu an veritabanındaki aktif URL sayısı için kullandık.</li>
+</ul>
+<hr />
+<h3>Soru 16: Kubernetes'te "2 replika" neden?</h3>
+<p><strong>Cevap:</strong></p>
+<p>Yüksek erişilebilirlik (High Availability) için. Tek bir pod çalışıyorken o pod bir sebepten kapanırsa (güncelleme, hata, donanım arızası) servis tamamen erişilemez hale gelir. 2 replika ile:</p>
+<ol>
+<li>Bir pod güncelleme alırken diğeri trafik almaya devam eder (Rolling Update).</li>
+<li>Bir pod çökerse Kubernetes otomatik olarak yenisini başlatır, bu sürede diğer pod hizmet verir.</li>
+<li>Yük iki pod arasında dağıtılır (Load Balancing).</li>
+</ol>
+<hr />
+<h3>Soru 17: LocalStack nedir, gerçek AWS'den ne farkı var?</h3>
+<p><strong>Cevap:</strong></p>
+<p>LocalStack, AWS servislerini yerel makinede veya CI ortamında simüle eden açık kaynak bir araçtır. Biz S3 (Simple Storage Service) bucket'ı simüle etmek için kullandık.</p>
+<p><strong>Farkı:</strong> LocalStack gerçek AWS'e bağlanmaz, dolayısıyla internet bağlantısı gerekmez ve ücret ödemezsiniz. Endpoint adresi <code>http://localhost:4566</code> olur, gerçek AWS'de ise <code>https://s3.amazonaws.com</code> olur.</p>
+<p><strong>Neden kullandık?</strong> CI ortamında gerçek AWS kullanmak için credential yönetimi ve maliyet gerekir. LocalStack ile bu yükü ortadan kaldırdık ve testlerimiz tamamen izole, ücretsiz ve hızlı çalıştı.</p>
+<hr />
+<h3>Soru 18: Jaeger ve OpenTelemetry'nin farkı nedir?</h3>
+<p><strong>Cevap:</strong></p>
+<ul>
+<li><strong>OpenTelemetry:</strong> Dağıtık izleme için açık standart ve SDK. Hangi backend'e veri göndereceğinizi bilmez, sadece "trace topla" der. Bir enstrümantasyon katmanıdır.</li>
+<li><strong>Jaeger:</strong> OpenTelemetry'nin topladığı trace verilerini depolayan ve görselleştiren backend'dir. Jaeger UI'da hangi fonksiyonun kaç ms sürdüğünü grafiksel olarak görebilirsiniz.</li>
+</ul>
+<p>Yani: <code>Kod → OpenTelemetry SDK → Jaeger → Jaeger UI</code></p>
+<p>Biz <code>tracing.py</code> dosyasında FastAPI ve SQLAlchemy'yi OpenTelemetry ile instrument ettik; bu sayede her HTTP isteği ve her DB sorgusu otomatik olarak trace oluşturuyor.</p>
+<hr />
+<h3>Soru 19: "O kısmı takım arkadaşım yaptı" diyebilir misiniz?</h3>
+<p><strong>Cevap (Söylenecek Cümle):</strong></p>
+<blockquote>
+<p>"Hayır hocam, bu projede kod reviewı birlikte yaptık. Ben şu anda gördüğünüz kodu size açıklayabilirim."</p>
+</blockquote>
+<p><strong>Sonra şunları söyleyin:</strong>
+- main.py'deki endpointleri ben de biliyorum çünkü hep birlikte test ettik.
+- CI/CD'nin her adımını ikimiz de takip ettik.
+- Sadece kod yazmak değil, birlikte debug ettik, birlikte çalıştırdık.</p>
+<hr />
+<h2>BÖLÜM 6 — HIZLI BAŞVURU (Son Dakika Özeti)</h2>
+<table>
+<thead>
+<tr>
+<th>Dosya</th>
+<th>Ne Yapar</th>
+<th>Anahtar Satır</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main.py</code></td>
+<td>Tüm API endpoint'leri</td>
+<td>Satır 226: <code>POST /shorten</code>, Satır 302: redirect</td>
+</tr>
+<tr>
+<td><code>shortener.py</code></td>
+<td>Kısa kod üretimi</td>
+<td>Satır 40: <code>secrets.choice()</code></td>
+</tr>
+<tr>
+<td><code>crud.py</code></td>
+<td>Veritabanı işlemleri</td>
+<td>SQLAlchemy session, ORM sorguları</td>
+</tr>
+<tr>
+<td><code>metrics.py</code></td>
+<td>Prometheus metrikleri</td>
+<td>Counter, Histogram, Gauge</td>
+</tr>
+<tr>
+<td><code>tracing.py</code></td>
+<td>Jaeger / OpenTelemetry</td>
+<td>OTLP exporter, env variable</td>
+</tr>
+<tr>
+<td><code>Dockerfile</code></td>
+<td>Multi-stage build</td>
+<td>Satır 21: builder, Satır 33: runtime</td>
+</tr>
+<tr>
+<td><code>conftest.py</code></td>
+<td>Test fixture'ları</td>
+<td>yield session, in-memory DB</td>
+</tr>
+<tr>
+<td><code>ci.yml</code></td>
+<td>GitHub Actions</td>
+<td>7 job, sıralı bağımlılıklar</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<blockquote>
+<p><strong>SON HATIRLATMA:</strong> "Nasıl yaptınız?" sorusuna cevap verirken her zaman <strong>"Neden bu kararı aldık?"</strong> bağlamını da ekleyin. Hoca sadece kodu değil, mühendislik kararlarınızı değerlendiriyor.</p>
+</blockquote></body></html>
