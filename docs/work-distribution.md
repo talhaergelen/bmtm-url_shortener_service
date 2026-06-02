@@ -1,80 +1,60 @@
-# İş Paylaşımı — URL Shortener Service
+# Is Paylasimi — URL Shortener Service
 
-**Marmara Üniversitesi — Bulut Mimarilerinde Test Mühendisliği**  
-**Konu #1: URL Shortener Service**
+## Ders
+
+**MTH2526-B25 — Bulut Mimarilerinde Test Muhendisligi**
+**2025–2026 Bahar Yariyili**
 
 ---
 
 ## Üyeler
 
-| İsim | Öğrenci No | Rol |
+| Isim | Ogrenci No | Rol |
 |------|-----------|-----|
-| *[İsim 1]* | *[No]* | Tech Lead, Repo Sahibi |
-| *[İsim 2]* | *[No]* | Backend & Veritabanı |
-| *[İsim 3]* | *[No]* | DevOps & CI/CD |
-
-> **Not:** Bu tabloyu gerçek isimler ve öğrenci numaralarıyla doldurun.
+| Talha Ergelen | 171423013 | Tech Lead, Repo Sahibi |
+| Osman Çingöz | 170423029 | Backend & DevOps |
 
 ---
 
-## Modül Sorumluluğu
+## Modül Sorumlulugu
 
-| Modül | Sorumlu | Yardımcı |
-|-----------------------------|---------|----------|
-| FastAPI endpoint'leri (main.py) | İsim 2 | İsim 1 |
-| Veritabanı modelleri (models.py) | İsim 2 | İsim 3 |
-| CRUD işlemleri (crud.py) | İsim 2 | İsim 1 |
-| Kısaltma algoritması (shortener.py) | İsim 1 | — |
-| Prometheus metrikleri (metrics.py) | İsim 1 | İsim 3 |
-| AWS/LocalStack istemcisi (aws_client.py) | İsim 3 | İsim 1 |
-| Dockerfile (multi-stage) | İsim 3 | İsim 2 |
-| docker-compose.yml | İsim 3 | İsim 1 |
-| Kubernetes manifestleri (k8s/) | İsim 3 | — |
-| GitHub Actions CI/CD (.github/) | İsim 3 | İsim 1 |
-| Grafana dashboard | İsim 1 | İsim 3 |
-| Unit testler (tests/unit/) | İsim 2 | İsim 1 |
-| Integration testler (tests/integration/) | İsim 1 | İsim 2 |
-| E2E testler (tests/e2e/) | İsim 2 | İsim 1 |
-| Postman koleksiyonu | İsim 1 | İsim 2 |
-| k6 performans testleri (perf/) | İsim 1 | — |
-| HTML arayüzü (src/static/) | İsim 2 | — |
-| Final rapor (docs/final-report.pdf) | İsim 1 | İsim 2 + 3 |
-| Sunum slaytları | İsim 3 | İsim 1 |
+| Modul | Sorumlu | Yardimci |
+|--------------------|--------------|--------------|
+| REST endpoint'ler | Osman Çingöz | Talha Ergelen |
+| DB modelleri | Osman Çingöz | Talha Ergelen |
+| Docker + compose | Talha Ergelen | Osman Çingöz |
+| K8s manifestleri | Talha Ergelen | - |
+| GitHub Actions | Talha Ergelen | Osman Çingöz |
+| Monitoring | Osman Çingöz | Talha Ergelen |
+| E2E testler | Osman Çingöz | Talha Ergelen |
+| Unit testler | Osman Çingöz | - |
+| Integration testler | Osman Çingöz | Talha Ergelen |
+| Performans (k6) | Talha Ergelen | - |
+| LocalStack S3 | Osman Çingöz | - |
+| Helm Chart (Bonus) | Talha Ergelen | - |
+| KEDA (Bonus) | Talha Ergelen | - |
+| ArgoCD (Bonus) | Talha Ergelen | - |
+| OpenTelemetry (Bonus) | Osman Çingöz | - |
+| Final rapor | Osman Çingöz | Talha Ergelen |
+| Sunum slaytlari | Talha Ergelen | Osman Çingöz |
 
 ---
 
-## Sunum Sorumluluğu (20 dakika slot)
+## Sunum Sorumlulugu (20 dk slot)
 
-| Süre | Bölüm | Sorumlu |
-|------|-------|---------|
-| 0–3 dk | Problem & Mimari | İsim 1 |
-| 3–7 dk | Test Stratejisi & Pipeline | İsim 2 |
-| 7–14 dk | Canlı Demo (PR → CI → Deploy → Metrik → E2E) | İsim 3 |
-| 14–17 dk | Sayılar & Performans Sonuçları | İsim 1 |
-| 17–20 dk | Q&A | Hep birlikte |
+- **0–5 dk:** Problem + Mimari + Teknoloji Yigini → Talha Ergelen
+- **5–10 dk:** Test Stratejisi + CI/CD Pipeline → Osman Çingöz
+- **10–17 dk:** Canli Demo (PR → CI → Deploy → Metrik → E2E) → Talha Ergelen
+- **17–20 dk:** Sayilar + Ogrendiklerimiz + Q&A → Birlikte
 
 ---
 
-## Commit İstatistikleri
+## Commit Istatistikleri
 
-> Bu bölümü sunum öncesi aşağıdaki komutla doldurun:
+Commit dagilimine erismek icin:
+
 ```bash
 git shortlog -sn --all
 ```
 
-| Üye | Commit Sayısı |
-|-----|--------------|
-| *İsim 1* | *--* |
-| *İsim 2* | *--* |
-| *İsim 3* | *--* |
-
----
-
-## Haftalık Çalışma Özeti
-
-| Hafta | Yapılan İşler |
-|-------|--------------|
-| Hafta 1 | Proje planlaması, FastAPI kurulumu, temel endpoint'ler |
-| Hafta 2 | Veritabanı modelleri, CRUD, Pytest unit testleri |
-| Hafta 3 | Docker, Kubernetes, GitHub Actions |
-| Hafta 4 | E2E testler, k6 performans, Grafana dashboard, rapor |
+> Tum commit gecmisi: https://github.com/talhaergelen/bmtm-url_shortener_service/commits/main

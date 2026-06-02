@@ -13,8 +13,8 @@
 
 | İsim | Öğrenci No | Rol |
 |------|-----------|-----|
-| Talha Ergelen | — | Tech Lead / Repo Sahibi |
-| Osman Çingöz | — | Backend & DevOps |
+| Talha Ergelen | 171423013 | Tech Lead / Repo Sahibi |
+| Osman Çingöz | 170423029 | Backend & DevOps |
 
 ---
 
@@ -341,8 +341,8 @@ Detaylı iş paylaşımı `docs/work-distribution.md` dosyasında yer almaktadı
 
 | Modül | Sorumlu |
 |-------|---------|
-| REST endpoint'ler & DB modelleri | Osman Çingöz |
-| Docker, K8s, CI/CD pipeline | Talha Ergelen |
+| REST endpoint'ler & DB modelleri | Osman Cingoz (170423029) |
+| Docker, K8s, CI/CD pipeline | Talha Ergelen (171423013) |
 | Test altyapısı (Pytest, Postman, E2E) | Ortak |
 | Monitoring (Prometheus, Grafana) | Ortak |
 | Performans testi (k6) | Ortak |

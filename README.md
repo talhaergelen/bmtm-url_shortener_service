@@ -30,9 +30,8 @@ Uzun URL'leri kısa kodlara dönüştüren, yönlendirme yapan ve tıklama istat
 
 | İsim | Öğrenci No | Rol |
 |------|-----------|-----|
-| *İsim giriniz* | *No giriniz* | Tech Lead |
-| *İsim giriniz* | *No giriniz* | Backend |
-| *İsim giriniz* | *No giriniz* | DevOps |
+| Talha Ergelen | 171423013 | Tech Lead / Repo Sahibi |
+| Osman Çingöz | 170423029 | Backend & DevOps |
 
 ---
 
