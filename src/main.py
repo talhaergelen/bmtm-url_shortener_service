@@ -32,6 +32,7 @@ import logging
 from typing import List
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi.openapi.docs import get_swagger_ui_html, get_redoc_html
 from fastapi.responses import RedirectResponse, Response, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -106,12 +107,12 @@ app = FastAPI(
     """,
     version="1.0.0",
     lifespan=lifespan,
-    # CDN yerine local static dosyalar kullan (kısıtlı ağlarda CDN engellenebilir)
-    redoc_js_url="/static/vendor/redoc.standalone.js",
-    swagger_js_url="/static/vendor/swagger-ui-bundle.js",
-    swagger_css_url="/static/vendor/swagger-ui.css",
+    # Varsayılan dokümantasyonları kapat, offline static kullanmak için custom route tanımlayacağız
+    docs_url=None,
+    redoc_url=None,
     swagger_ui_parameters={"persistAuthorization": True},
 )
+
 
 
 # Static dosyaları sun (HTML arayüzü)
@@ -126,6 +127,26 @@ except Exception as e:
 
 if _os.path.exists(_static_dir):
     app.mount("/static", StaticFiles(directory=_static_dir), name="static")
+
+@app.get("/docs", include_in_schema=False)
+async def custom_swagger_ui_html():
+    """Offline Swagger UI"""
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - Swagger UI",
+        oauth2_redirect_url=app.swagger_ui_oauth2_redirect_url,
+        swagger_js_url="/static/vendor/swagger-ui-bundle.js",
+        swagger_css_url="/static/vendor/swagger-ui.css",
+    )
+
+@app.get("/redoc", include_in_schema=False)
+async def redoc_html():
+    """Offline ReDoc UI"""
+    return get_redoc_html(
+        openapi_url=app.openapi_url,
+        title=app.title + " - ReDoc",
+        redoc_js_url="/static/vendor/redoc.standalone.js",
+    )
 
 
 @app.get("/", response_class=HTMLResponse, tags=["Sistem"], include_in_schema=False)
