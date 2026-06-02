@@ -113,8 +113,6 @@ app = FastAPI(
     swagger_ui_parameters={"persistAuthorization": True},
 )
 
-
-
 # Static dosyaları sun (HTML arayüzü)
 _static_dir = _os.path.join(_os.path.dirname(__file__), "static")
 
@@ -128,6 +126,7 @@ except Exception as e:
 if _os.path.exists(_static_dir):
     app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
+
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():
     """Offline Swagger UI"""
@@ -138,6 +137,7 @@ async def custom_swagger_ui_html():
         swagger_js_url="/static/vendor/swagger-ui-bundle.js",
         swagger_css_url="/static/vendor/swagger-ui.css",
     )
+
 
 @app.get("/redoc", include_in_schema=False)
 async def redoc_html():
