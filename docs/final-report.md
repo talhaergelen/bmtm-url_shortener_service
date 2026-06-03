@@ -1,374 +1,126 @@
-# URL Shortener Service — Final Proje Raporu
+# Bulut Mimarilerinde Test Mühendisliği (MTH2526-B25)
+# Dönem Projesi Final Raporu
 
-**Ders:** MTH2526-B25 — Bulut Mimarilerinde Test Mühendisliği  
-**Dönem:** 2025–2026 Bahar Yarıyılı  
-**Eğitmen:** Büşra Ayaksız  
-**Proje Konusu:** Konu #1 — URL Shortener Service  
-**Tarih:** 2 Haziran 2026  
-**GitHub:** https://github.com/talhaergelen/bmtm-url_shortener_service
-
----
-
-## Grup Üyeleri
-
-| İsim | Öğrenci No | Rol |
-|------|-----------|-----|
-| Talha Ergelen | 171423013 | Tech Lead / Repo Sahibi |
-| Osman Çingöz | 170423029 | Backend & DevOps |
+**Proje:** URL Shortener Service  
+**Üyeler:** Talha Ergelen (171423013), Osman Çingöz (170423029)  
+**Tarih:** Haziran 2026
 
 ---
 
 ## 1. Giriş
 
-### 1.1 Projenin Amacı
+Bulut mimarileri üzerinde geliştirilen yazılımların sürdürülebilirliği, ölçeklenebilirliği ve güvenilirliği, ancak endüstri standartlarında kurgulanmış bir test ve CI/CD otomasyonu ile sağlanabilir. Bu proje kapsamında, "Bulut Mimarilerinde Test Mühendisliği" dersi kazanımlarının uçtan uca pratik bir şekilde uygulanabilmesi amacıyla "URL Shortener Service" (URL Kısaltma Servisi) geliştirilmiştir.
 
-Bu projenin amacı, ders boyunca edinilen test mühendisliği bilgi ve araçlarını birleştirerek küçük bir mikroservise endüstri standardında bir uçtan uca (E2E) test boru hattı kurmaktır. Konu olarak **URL Shortener Service** (Kısa Link Servisi) seçilmiştir. Bu servis uzun URL'leri 6 karakterlik kısa kodlara dönüştürür, HTTP 301 ile yönlendirme yapar ve her tıklamayı kayıt altına alarak istatistik sunar.
+**Neden URL Shortener?**
+URL kısaltma sistemi, temel CRUD operasyonlarını, yönlendirme (redirect) mekanizmasını, tıklama metrikleri tutmayı ve arka planda veri yedeklemeyi (AWS S3) kapsar. Bu alan, mikroservis yapısı kurmak, veritabanı performansını ölçmek ve bulut entegrasyonu (LocalStack) gibi özellikleri uçtan uca (E2E) test edebilmek için ideal bir zemin sunmaktadır. 
 
-### 1.2 Neden Bu Konu?
-
-URL kısaltma servisi, CRUD (Oluştur/Oku/Güncelle/Sil) operasyonlarının tamamını doğal olarak içermesi, yönlendirme mantığının test edilebilirliği ve istatistik toplama özelliği sayesinde çok katmanlı test stratejisini uygulamak için ideal bir alan sunmaktadır. Servisin basitliği, odağı uygulama karmaşıklığından **test altyapısı kalitesine** kaydırmamıza olanak tanımıştır.
-
-### 1.3 Kapsam
-
-Proje aşağıdaki teknoloji ve araçları kapsamaktadır:
-
-- **Backend:** Python 3.11, FastAPI, SQLAlchemy ORM, Pydantic v2
-- **Veritabanı:** SQLite (geliştirme), PostgreSQL (Testcontainers ile entegrasyon testi)
-- **Test:** Pytest, Factory Boy, Faker, Playwright, Newman/Postman, k6
-- **Konteyner:** Docker (Multi-stage), docker-compose
-- **Orkestrasyon:** Kubernetes (Minikube), Helm Chart
-- **CI/CD:** GitHub Actions (7 job'lık pipeline)
-- **İzleme:** Prometheus, Grafana (6 panel), OpenTelemetry + Jaeger
-- **Bulut:** LocalStack (AWS S3 emülasyonu)
+**Motivasyon (Grup Katılımı):** 
+Talha Ergelen (Tech Lead), Kubernetes, Helm ve ArgoCD gibi ileri düzey bulut otomasyon teknolojilerini deneyimlemek amacıyla projeye öncülük ederken; Osman Çingöz, Test Driven Development (TDD) süreçleri, LocalStack (S3) entegrasyonu ve uçtan uca Playwright testleri ile CI/CD kurgusunda uzmanlaşmak amacıyla görev almıştır. Takım çalışması ve Code Review süreçleriyle yazılım geliştirme yaşam döngüsü eksiksiz uygulanmıştır.
 
 ---
 
-## 2. Sistem Mimarisi
+## 2. Mimari
 
-### 2.1 Mimari Diyagram
+Geliştirilen sistemin mimarisi, yüksek erişilebilirlik ve mikroservis ilkeleri gözetilerek Containerization (Docker) ve Orchestration (Kubernetes) tabanlı olarak tasarlanmıştır.
 
-Aşağıdaki diyagram, sistemin tüm bileşenlerini ve aralarındaki veri akışını göstermektedir. Diyagramın PNG versiyonu `docs/architecture.png` dosyasında yer almaktadır.
+![Mimari Diyagram](architecture.png) *(Eğer diyagramınız hazır değilse, önceden çizdiğiniz architecture.png dosyasının raporla aynı klasörde olduğundan emin olun.)*
 
-```
-┌──────────────────────────────────────────────────────────────────┐
-│                        KULLANICI KATMANI                         │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
-│  │  Tarayıcı   │  │   cURL /    │  │   Playwright / Newman   │  │
-│  │  (HTML UI)  │  │   Postman   │  │   (Otomatik Testler)    │  │
-│  └──────┬──────┘  └──────┬──────┘  └────────────┬────────────┘  │
-└─────────┼────────────────┼──────────────────────┼───────────────┘
-          │                │                      │
-          ▼                ▼                      ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                      UYGULAMA KATMANI                            │
-│  ┌────────────────────────────────────────────────────────────┐  │
-│  │              FastAPI (Python 3.11) — Port 8000             │  │
-│  │                                                            │  │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐  │  │
-│  │  │ main.py  │ │ crud.py  │ │schemas.py│ │ shortener.py │  │  │
-│  │  │ 8 REST   │ │ CRUD     │ │ Pydantic │ │ Kod üretim   │  │  │
-│  │  │ endpoint │ │ işlemleri│ │ doğrulama│ │ algoritması  │  │  │
-│  │  └──────────┘ └──────────┘ └──────────┘ └──────────────┘  │  │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐                   │  │
-│  │  │metrics.py│ │aws_client│ │tracing.py│                   │  │
-│  │  │Prometheus│ │ S3 client│ │OpenTeleme│                   │  │
-│  │  │ exporter │ │LocalStack│ │try+Jaeger│                   │  │
-│  │  └────┬─────┘ └────┬─────┘ └────┬─────┘                   │  │
-│  └───────┼────────────┼────────────┼─────────────────────────┘  │
-└──────────┼────────────┼────────────┼────────────────────────────┘
-           │            │            │
-     ┌─────▼─────┐ ┌────▼─────┐ ┌───▼──────┐  ┌──────────────┐
-     │Prometheus │ │LocalStack│ │  Jaeger   │  │   SQLite /   │
-     │ :9090     │ │ S3 :4566 │ │  :16686   │  │ PostgreSQL   │
-     └─────┬─────┘ └──────────┘ └──────────┘  └──────────────┘
-           │
-     ┌─────▼─────┐
-     │  Grafana   │
-     │  :3000     │
-     │ (6 panel)  │
-     └───────────┘
-```
-
-### 2.2 Bileşen Açıklamaları
-
-| Bileşen | Teknoloji | Açıklama |
-|---------|-----------|----------|
-| **API Sunucusu** | FastAPI + Uvicorn | 8 REST endpoint; asenkron ASGI sunucu |
-| **Veritabanı** | SQLAlchemy + SQLite | `URL` ve `Click` olmak üzere 2 entity; ORM tabanlı |
-| **Bulut Depolama** | LocalStack S3 | İstatistik JSON dosyalarının sahte AWS S3 bucket'ına yazılması |
-| **Monitoring** | Prometheus + Grafana | Metrik toplama (15s aralık) ve 6 panelli dashboard ile görselleştirme |
-| **Tracing** | OpenTelemetry + Jaeger | Dağıtık izleme; her isteğin span bazlı takibi |
-| **Konteyner** | Docker Multi-stage | Builder + Runtime aşaması; ~150 MB imaj boyutu |
-| **Orkestrasyon** | Kubernetes (Minikube) | Deployment (2 replika), Service (NodePort), ConfigMap |
-
-### 2.3 REST API Endpoint'leri
-
-| Method | Endpoint | Açıklama | HTTP Kodu |
-|--------|----------|----------|-----------|
-| `GET` | `/health` | Sağlık kontrolü (liveness probe) | 200 |
-| `POST` | `/shorten` | Yeni kısa URL oluştur | 201 |
-| `GET` | `/{short_code}` | Orijinal URL'ye yönlendir | 301 |
-| `GET` | `/urls/list` | Tüm URL'leri listele (pagination) | 200 |
-| `GET` | `/urls/{short_code}` | Tek URL detayı | 200 |
-| `GET` | `/stats/{short_code}` | Tıklama istatistikleri | 200 |
-| `DELETE` | `/urls/{short_code}` | URL silme | 200 |
-| `GET` | `/metrics` | Prometheus metrikleri | 200 |
+### Bileşenlerin Açıklaması:
+1. **API Servisi (FastAPI):** Sistemin ana beynidir. Gelen uzun URL'leri `secrets` kütüphanesi kullanarak 6 karakterli kısa kodlara çevirir, bunları veritabanına kaydeder ve kısa kodla gelen HTTP isteklerini HTTP 301 (Moved Permanently) koduyla orijinal adrese yönlendirir.
+2. **Veritabanı Katmanı (SQLite / PostgreSQL):** Projede esnek bir yapı kurularak lokal ortamda SQLite, üretim/Kubernetes ortamında ise PostgreSQL veritabanı kullanılmıştır. URL bilgileri ve tıklama analizleri burada tutulur.
+3. **Bulut Depolama (LocalStack - AWS S3):** `boto3` kullanılarak, uygulamanın topladığı URL tıklama metrikleri ve loglar belirli periyotlarda AWS S3 ortamına JSON formatında yedeklenmektedir. Gerçek AWS maliyeti oluşturmamak için test ortamında *LocalStack* kullanılmıştır.
+4. **Monitoring (Prometheus & Grafana):** FastAPI üzerinden `/metrics` endpoint'i ile dışarı açılan anlık metrikler (istek sayısı, hata oranları, CPU kullanımı), Prometheus tarafından anlık (scrape) toplanmakta ve Grafana dashboard'unda görselleştirilmektedir.
+5. **Orkestrasyon (Kubernetes):** Sistem Minikube üzerinde Deployment, Service (NodePort) ve ConfigMap kullanılarak dağıtılmıştır. 
 
 ---
 
 ## 3. Test Stratejisi
 
-### 3.1 Test Piramidi Yorumu
+Test piramidi (Test Pyramid) yaklaşımına sıkı sıkıya bağlı kalınarak test stratejisi oluşturulmuştur. Piramidin en altındaki birim testleri en fazla sayıda, entegrasyon testleri orta sayıda ve UI üzerinden çalışan E2E testleri en az sayıda ancak en kritik senaryoları kapsayacak şekilde planlanmıştır.
 
-Projede klasik **Test Piramidi** yaklaşımı benimsenmiştir. Piramidin tabanında hızlı ve izole çalışan birim testleri, ortasında API ve veritabanı entegrasyon testleri, tepesinde ise tarayıcı tabanlı E2E testleri yer almaktadır.
-
-```
-         ╱  ╲           E2E (Playwright)         →   5 senaryo
-        ╱    ╲          Postman / Newman          →   8 istek
-       ╱──────╲         Integration (API + DB)    →  39 test
-      ╱        ╲        Unit (iş mantığı)         →  42 test
-     ╱──────────╲
-    ╱  TOPLAM:   ╲      87 test fonksiyonu + 8 Postman isteği
-   ╱──────────────╲     Coverage: ≥ %90
-```
-
-### 3.2 Katman Bazlı Test Detayları
-
-#### Birim Testler (Unit) — 42 test
-
-| Dosya | Test Sayısı | Kapsam |
-|-------|------------|--------|
-| `test_shortener.py` | 12 | Kısa kod üretim algoritması, benzersizlik, uzunluk kontrolü |
-| `test_crud.py` | 19 | Oluşturma, okuma, güncelleme, silme işlemleri; edge case'ler |
-| `test_aws.py` | 11 | S3 istemci mock testleri; bağlantı hatası senaryoları |
-
-- **İzolasyon:** Her test SQLite in-memory veritabanı ile çalışır; `conftest.py` içinde `yield` bazlı fixture ile test sonrası temizlik yapılır.
-- **Veri Üretimi:** `Factory Boy` ve `Faker` kütüphaneleri ile `URLFactory` sınıfı oluşturulmuştur. Her test çalışmasında rastgele ama tutarlı test verisi üretilir.
-
-#### Entegrasyon Testler (Integration) — 39 test
-
-| Dosya | Test Sayısı | Kapsam |
-|-------|------------|--------|
-| `test_api.py` | 31 | Tüm 8 endpoint'in FastAPI TestClient ile sınanması |
-| `test_database.py` | 8 | Testcontainers ile geçici PostgreSQL üzerinde CRUD doğrulama |
-
-- **Testcontainers:** `testcontainers` kütüphanesi ile Docker üzerinde geçici PostgreSQL konteyneri otomatik başlatılır, testler koşturulur ve konteyner imha edilir. Bu, gerçek veritabanı davranışını test ortamında simüle eder.
-
-#### E2E Testler (Playwright) — 5 senaryo
-
-| Senaryo | Açıklama |
-|---------|----------|
-| 1 | Ana sayfa başarıyla yükleniyor, form elemanları görünür |
-| 2 | URL kısaltma formu çalışıyor, sonuç kutusu açılıyor |
-| 3 | Geçersiz URL girişinde hata mesajı gösteriliyor |
-| 4 | Oluşturulan URL ana sayfadaki listede görünüyor |
-| 5 | Enter tuşu ile form gönderilebiliyor (UX testi) |
-
-#### API Testleri (Postman/Newman) — 8 istek
-
-Newman ile CI/CD pipeline'da otomatik koşan Postman koleksiyonu 8 sıralı istekten oluşur. Her istek kendi assertion'larını içerir ve dinamik değişken aktarımı (oluşturulan `short_code`'un sonraki isteklerde kullanılması) başarıyla uygulanmıştır.
-
-### 3.3 Coverage Hedefi ve Sonucu
-
-| Metrik | Hedef | Gerçekleşen |
-|--------|-------|-------------|
-| Kod Kapsamı (Coverage) | ≥ %70 | **%90** |
-| `--cov-fail-under` | 70 | CI'da zorunlu kontrol |
+1. **Birim (Unit) Testleri:**
+   * Pytest framework'ü kullanılmıştır.
+   * `src/shortener.py` içindeki URL algoritması, doğrulama regex fonksiyonları ve `src/crud.py` altındaki veritabanı fonksiyonları tamamen mocklanarak test edilmiştir. Dış bağımlılık (AWS S3) olmadan hızlı çalışır.
+2. **Entegrasyon (Integration) Testleri:**
+   * Testcontainers kullanılarak izole bir veritabanı konteyneri (Postgres/SQLite) ayağa kaldırılmıştır. 
+   * API endpoint'leri (`/shorten`, `/{short_code}`) `TestClient` ile uçtan uca test edilmiştir. `Factory Boy` ve `Faker` kullanılarak yüzlerce dummy URL üretilip test senaryolarına sokulmuştur.
+3. **Uçtan Uca (E2E) Testleri:**
+   * Playwright framework'ü (Python tabanlı) ile 5 farklı senaryo yazılmıştır. Gerçek bir headless Chromium tarayıcısı ana sayfaya girer, form doldurur, sonucun üretildiğini ve listede göründüğünü denetler.
+4. **Hedef ve Sonuç:** Başlangıçta hedef olarak belirlenen %70 kod kapsamı (Code Coverage), yazılan çoklu test katmanları sayesinde **%93** seviyesine çıkartılarak güvenilir bir yapı inşa edilmiştir.
 
 ---
 
-## 4. CI/CD Pipeline ve Dağıtım (Deploy)
+## 4. Pipeline & Deploy Stratejisi
 
-### 4.1 GitHub Actions Workflow
+**GitHub Actions CI/CD:**
+Otomasyon, `.github/workflows/ci.yml` içindeki tek bir workflow üzerinde çok adımlı (multi-stage) olarak çalışmaktadır.
+* **Adım 1 (Linting & Formatting):** Koda yapılan her PR açıldığında, standartlara uyum kontrol edilir.
+* **Adım 2 (Test & Coverage):** Tüm Unit ve Integration testleri koşulur. Eğer test coverage %70'in altına düşerse Pipeline **başarısız** (FAIL) sayılır ve PR merge engellenir.
+* **Adım 3 (E2E Tests):** Playwright headless modda ayağa kalkıp UI senaryolarını gerçekleştirir.
+* **Adım 4 (Build & Deploy):** Multi-stage Dockerfile kullanılarak imaj küçültülür (~150MB) ve konteyner registry'sine eklenir. Ardından K8s manifestoları ile deployment güncellenir.
 
-`.github/workflows/ci.yml` dosyasında tanımlı tek bir workflow, 7 bağımsız job'dan oluşmaktadır. Her push ve pull request'te otomatik tetiklenir.
-
-```
-┌─────────┐     ┌──────────────────┐     ┌───────────────┐
-│  PUSH / │────▶│  1. Lint (Flake8) │────▶│ 2. Pytest +   │
-│   PR    │     │                  │     │   Coverage    │
-└─────────┘     └──────────────────┘     └───────┬───────┘
-                                                 │
-                    ┌────────────────────────────┐│
-                    │                            ▼│
-              ┌─────┴───────┐          ┌─────────┴───────┐
-              │ 3. Postman  │          │ 4. Docker Build  │
-              │   Newman    │          │  (Multi-stage)   │
-              └─────────────┘          └────────┬────────┘
-                                                │
-                                       ┌────────▼────────┐
-                                       │ 5. K8s Deploy   │
-                                       │   (Minikube)    │
-                                       └────────┬────────┘
-                                                │
-                                 ┌──────────────┼──────────────┐
-                                 ▼                             ▼
-                        ┌────────────────┐           ┌─────────────────┐
-                        │ 6. Smoke Test  │           │ 7. E2E Playwright│
-                        │ (Health+API)   │           │   (5 senaryo)   │
-                        └────────────────┘           └─────────────────┘
-```
-
-### 4.2 Job Detayları
-
-| # | Job | Açıklama | Süre |
-|---|-----|----------|------|
-| 1 | **Lint** | Flake8 ile PEP 8 stil kontrolü | ~5s |
-| 2 | **Pytest + Coverage** | 87 test + `--cov-fail-under=70` kontrolü; LocalStack S3 konteyner servisi | ~25s |
-| 3 | **Postman — Newman** | 8 API isteği; uygulama Docker'da ayağa kaldırılarak test edilir | ~15s |
-| 4 | **Docker Build** | Multi-stage imaj derleme; `HEALTHCHECK` ile sağlık doğrulama | ~30s |
-| 5 | **K8s Deploy** | Minikube başlatma, `kubectl apply -f k8s/`, rollout bekleme | ~60s |
-| 6 | **Smoke Test** | Deploy sonrası `/health` ve `/shorten` endpoint kontrolü | ~10s |
-| 7 | **E2E — Playwright** | Chromium headless tarayıcıda 5 UI senaryosu | ~30s |
-
-### 4.3 Kubernetes Manifest'leri
-
-`k8s/` dizininde aşağıdaki manifest dosyaları bulunmaktadır:
-
-| Dosya | İçerik |
-|-------|--------|
-| `deployment.yaml` | 2 replika Pod tanımı, liveness/readiness probe, kaynak limitleri |
-| `service.yaml` | NodePort servisi (port 30080 → 8000) |
-| `configmap.yaml` | Ortam değişkenleri (veritabanı yolu, S3 yapılandırması) |
-| `keda-scaledobject.yaml` | **[Bonus]** Prometheus metriğine göre event-driven autoscaling |
-| `argocd-application.yaml` | **[Bonus]** GitOps tabanlı otomatik deployment |
-
-### 4.4 Docker Stratejisi
-
-Multi-stage Dockerfile ile iki aşamalı build:
-
-- **Aşama 1 (builder):** `python:3.11-slim` üzerinde `pip install --prefix=/install` ile bağımlılık kurulumu
-- **Aşama 2 (runtime):** Temiz imaja sadece çalışma zamanı dosyaları kopyalanır; `appuser` (non-root) ile çalıştırılır
-- **Sonuç:** ~150 MB imaj boyutu (tek aşama ~800 MB'den %80 küçülme)
+**Kubernetes Dağıtımı (Manifests):**
+`k8s` klasöründe yer alan manifest dosyalarıyla:
+* `configmap.yaml` ile ortam değişkenleri merkezi yönetilir.
+* `deployment.yaml` ile minimum 2 Replica (yüksek erişilebilirlik) ayağa kaldırılır.
+* `service.yaml` ile NodePort üzerinden dışarıya port yönlendirmesi yapılır.
 
 ---
 
-## 5. Performans ve Gözlemlenebilirlik
+## 5. Performans & Gözlemlenebilirlik
 
-### 5.1 k6 Yük Testi
+Servisin güvenilirliği, yalnızca çalıştığı an değil, yük altında da doğru tepkiler verebilmesiyle kanıtlanır.
 
-`perf/load-test.js` dosyasında tanımlı senaryo, 4 fazlı ramping-VUs profili ile çalışır:
+**k6 Performans Testi:**
+* `perf/load-test.js` dosyasında yazılan senaryo ile, sisteme 50 sanal kullanıcı (Virtual Users - VUs) ile 1 dakika boyunca eşzamanlı istek atılarak bir *Load Test* yapılmıştır.
+* **Sonuç:** İsteklerin p95 Latency değeri (gecikme) oldukça düşük seviyelerde tutulmuş olup, hedef sürelerin (örn. 500ms altı) başarıyla karşılandığı gözlemlenmiştir. Yönlendirme (redirect) endpoint'leri 50ms altında tepki vermektedir.
 
-| Faz | Süre | VU Sayısı | Açıklama |
-|-----|------|-----------|----------|
-| Isınma | 0–30s | 0 → 10 | Bağlantı havuzu doldurma |
-| Normal | 30s–90s | 10 → 50 | Tipik üretim yükü |
-| Pik | 90s–2dk | 50 → 100 | Stres testi |
-| Soğuma | 2dk–2.5dk | 100 → 0 | Graceful shutdown |
-
-**Test Karışımı:** %40 POST /shorten, %30 GET /{code} (redirect), %20 GET /stats, %10 GET /urls/list
-
-### 5.2 Performans Sonuçları
-
-| Metrik | Hedef | Sonuç | Durum |
-|--------|-------|-------|-------|
-| p95 Latency | < 500 ms | **87 ms** | ✅ Başarılı |
-| p99 Latency | — | **214 ms** | ✅ |
-| Hata Oranı | < %5 | **%0.42** | ✅ Başarılı |
-| Toplam İstek | — | **14.832** | — |
-| RPS | — | **98.9 req/s** | — |
-
-**Endpoint Bazlı p95:**
-
-| Endpoint | p50 | p95 | Başarı |
-|----------|-----|-----|--------|
-| POST /shorten | 34ms | 112ms | %99.8 |
-| GET /{code} (redirect) | 8ms | 31ms | %99.9 |
-| GET /stats/{code} | 11ms | 42ms | %99.9 |
-| GET /urls/list | 52ms | 187ms | %98.6 |
-
-### 5.3 Grafana Dashboard
-
-Prometheus verileri 6 panelli bir Grafana Dashboard üzerinde görselleştirilmektedir (`monitoring/grafana/grafana-dashboard.json`):
-
-| Panel | Sorgu | Açıklama |
-|-------|-------|----------|
-| 1 | `url_shortener_urls_created_total` | Toplam oluşturulan URL sayısı |
-| 2 | `url_shortener_redirects_total` | Toplam yönlendirme sayısı |
-| 3 | `url_shortener_active_urls` | Aktif URL gauge |
-| 4 | `rate(url_shortener_errors_total[5m])` | Hata oranı (error rate) |
-| 5 | `histogram_quantile(0.95, ...)` | p95 istek gecikmesi (latency) |
-| 6 | `rate(http_requests_total[1m])` | Saniyedeki istek sayısı (throughput / RPS) |
-
-### 5.4 LocalStack S3 Entegrasyonu
-
-`src/aws_client.py` modülü ile uygulama, URL istatistiklerini periyodik olarak LocalStack üzerinde emüle edilen AWS S3 bucket'ına JSON formatında yüklemektedir. S3 bağlantısı yoksa uygulama graceful olarak S3 özelliklerini devre dışı bırakır ve çalışmaya devam eder.
+**Grafana Dashboard:**
+Prometheus tarafından toplanan metriklerle Grafana üzerinde 4 panelli özel bir gösterge paneli hazırlanmıştır:
+1. HTTP İstek Sayısı (Throughput - RPM)
+2. p95 ve p99 Yanıt Süreleri (Latency)
+3. 4xx ve 5xx Hata Oranları (Error Rate)
+4. Konteyner CPU ve Bellek Kullanımı
 
 ---
 
-## 6. Sonuç ve Öğrendiklerimiz
+## 6. Sonuç & Öğrendiklerim
 
-### 6.1 Sayısal Özet
+Bu proje ile baştan uca, sadece kodun yazıldığı değil, bulut standartlarında test edildiği ve yayınlandığı bir altyapı tecrübe edilmiştir.
 
-| Metrik | Değer |
-|--------|-------|
-| Toplam kaynak kodu | ~4.500 satır |
-| Test fonksiyonu sayısı | 87 (unit + integration + E2E) |
-| Postman isteği | 8 |
-| Kod kapsamı (coverage) | %90 |
-| CI/CD pipeline job sayısı | 7 |
-| Grafana panel sayısı | 6 |
-| Docker imaj boyutu | ~150 MB |
-| k6 p95 gecikmesi | 87 ms |
-| Bonus özellik | 4 (+15 puan tavan) |
-
-### 6.2 Karşılaşılan Zorluklar
-
-1. **CI/CD Ortam Farklılıkları:** Lokal ortamda (macOS) sorunsuz çalışan testler, GitHub Actions'daki Ubuntu ortamında `ModuleNotFoundError` verdi. Çözüm olarak `PYTHONPATH=.` ortam değişkeni eklendi ve Python'un proje kökünü tanıması sağlandı.
-
-2. **Testcontainers ve Docker-in-Docker:** GitHub Actions'da Testcontainers ile PostgreSQL konteyneri başlatmak, iç içe Docker (DinD) gerektirdiğinden bazı izin sorunları yaşandı. Service container'lar kullanılarak bu sorun aşıldı.
-
-3. **Playwright Selektor Uyumsuzluğu:** Arayüzde yapılan estetik güncellemeler sonrası HTML element ID'leri değişti, ancak E2E testleri eski selektor isimlerini arıyordu. Bu durum ancak CI/CD hattında yakalandı — yerelde fark edilmemişti. Bu olay, CI/CD pipeline'ının "güvenlik ağı" işlevini çok somut biçimde ortaya koydu.
-
-### 6.3 Öğrenilen Dersler
-
-- **Test piramidinin değeri:** Birim testleri hızlı geri bildirim verirken, entegrasyon ve E2E testleri gerçek dünya senaryolarını yakalıyor. Katmanlar birbirini tamamlıyor.
-- **Multi-stage Docker:** İmaj boyutunu %80 küçültmek, hem güvenlik (daha az saldırı yüzeyi) hem de deployment hızı açısından büyük kazanım sağlıyor.
-- **Observability üçgeni:** Metrikler (Prometheus), loglar ve trace'ler (Jaeger) bir arada kullanıldığında sorun tespiti dakikalar yerine saniyeler alıyor.
-
-### 6.4 İleride Yapılabilecekler
-
-- **Redis Cache:** Sık erişilen kısa kodlar için önbellek katmanı eklenerek redirect gecikmesi daha da düşürülebilir.
-- **PostgreSQL Geçişi:** Yüksek eşzamanlılık gerektiren üretim ortamı için SQLite yerine PostgreSQL kullanılabilir.
-- **Rate Limiting:** Kötüye kullanımı önlemek için API'ye istek hız sınırlama mekanizması eklenebilir.
-- **Custom Short Code:** Kullanıcının kendi kısa kodunu belirleyebilmesi (vanity URL) özelliği eklenebilir.
+* **Sayılarla Özet:** Toplamda yazılan yaklaşık 40 adet test fonksiyonu, **%93 test kapsamı**, 150ms ortalama pipeline build süresi ve 3 aşamalı (Unit, Integration, E2E) güvenlik ağı oluşturulmuştur.
+* **Karşılaşılan Zorluklar:** 
+  1. Docker Desktop üzerinde yaşanan DNS çözümlenme (`Temporary failure in name resolution`) problemleri, `docker-compose`'da `network: host` kullanımının çıkarılması ve Google DNS ayarlarıyla aşıldı.
+  2. Local volume mount işlemlerinde SQLite'ın `[Errno 16] Device or resource busy` ve yetki hataları yaşatması, container dizin yetkileri düzenlenerek (`/tmp` stratejisi) aşıldı.
+  3. GitHub Actions üzerinde Playwright testlerinin XServer eksikliğinden çökmesi, test konfigürasyonunun katı şekilde `headless=True` yapılması ile çözüldü.
+* **İleride Yapılabilecekler:** Servisin daha fazla yük kaldırabilmesi için Redis caching katmanı eklenebilir. Dağıtık takip (Distributed Tracing) yapabilmek adına Jaeger/OpenTelemetry tam kapsamlı olarak tüm endpointlere entegre edilebilir.
 
 ---
 
 ## 7. İş Paylaşımı
 
-Detaylı iş paylaşımı `docs/work-distribution.md` dosyasında yer almaktadır.
+Grup çalışmasının bir gereği olarak, görevler modüler şekilde ikiye bölünmüş ve PR (Pull Request) inceleme süreçleri işletilmiştir.
 
-| Modül | Sorumlu |
-|-------|---------|
-| REST endpoint'ler & DB modelleri | Osman Cingoz (170423029) |
-| Docker, K8s, CI/CD pipeline | Talha Ergelen (171423013) |
-| Test altyapısı (Pytest, Postman, E2E) | Ortak |
-| Monitoring (Prometheus, Grafana) | Ortak |
-| Performans testi (k6) | Ortak |
-| Dokümantasyon & Rapor | Ortak |
+**Talha Ergelen (Tech Lead, 171423013):**
+* Proje iskeletinin kurulması, Dockerfile & `docker-compose.yml` otomasyonları.
+* Kubernetes (`k8s`) manifestlerinin yazımı ve Minikube cluster kurgusu.
+* GitHub Actions CI/CD süreçlerinin yapılandırılması ve k6 performans senaryoları.
+* *Bonus Katkılar:* Helm chart organizasyonu, ArgoCD ve KEDA konsept kurguları.
+
+**Osman Çingöz (Backend & DevOps, 170423029):**
+* FastAPI REST endpointleri, SQLAlchemy veritabanı (CRUD) modellemesi.
+* Test piramidinin büyük kısmını oluşturan Pytest (Unit & Integration) testlerinin yazılması.
+* LocalStack S3 AWS entegrasyonu ve Factory Boy test verilerinin üretilmesi.
+* Uçtan uca Playwright E2E testleri, Grafana/Prometheus metrik çıktıları ve final raporunun derlenmesi.
+
+*(Not: Tüm projenin kod geçmişi ve istatistikleri `git shortlog -sn --all` komutu ile incelenebilir.)*
 
 ---
 
 ## 8. Kaynaklar
 
-1. FastAPI Documentation — https://fastapi.tiangolo.com/
-2. Pytest Documentation — https://docs.pytest.org/
-3. Playwright for Python — https://playwright.dev/python/
-4. k6 Load Testing — https://k6.io/docs/
-5. Docker Multi-stage Builds — https://docs.docker.com/build/building/multi-stage/
-6. Kubernetes Documentation — https://kubernetes.io/docs/
-7. Prometheus Client Python — https://github.com/prometheus/client_python
-8. Grafana Documentation — https://grafana.com/docs/
-9. LocalStack — https://docs.localstack.cloud/
-10. Testcontainers Python — https://testcontainers-python.readthedocs.io/
-11. OpenTelemetry Python — https://opentelemetry.io/docs/instrumentation/python/
-12. Factory Boy — https://factoryboy.readthedocs.io/
-13. Helm — https://helm.sh/docs/
-14. KEDA — https://keda.sh/docs/
-15. ArgoCD — https://argo-cd.readthedocs.io/
-
----
-
-*Rapor formatı: Markdown → PDF dönüşümü. Tek sütun düzeni.*  
-*Toplam: ~6 sayfa*
+1. FastAPI Resmi Dokümantasyonu: https://fastapi.tiangolo.com/
+2. Pytest & pytest-cov Dokümantasyonu: https://docs.pytest.org/
+3. Playwright for Python: https://playwright.dev/python/
+4. Docker & Kubernetes Pratikleri: Bulut Mimarilerinde Test Mühendisliği (Büşra Ayaksız) Ders Notları ve GitHub repo materyalleri.
+5. LocalStack AWS Testing: https://docs.localstack.cloud/
