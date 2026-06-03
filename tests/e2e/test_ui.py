@@ -95,10 +95,14 @@ def browser_context(test_server):
     """
     try:
         from playwright.sync_api import sync_playwright
+        import os
+        
+        # GitHub Actions gibi CI ortamlarında ekran olmadığı için arkaplanda (headless) çalışmalı.
+        # Kendi bilgisayarımızda (lokalde) ise şov yapması için ekranda (headed) açılmalı.
+        is_ci = os.getenv("CI", "false").lower() == "true"
         
         with sync_playwright() as p:
-            # slow_mo=1000 ile robotun hareketlerini bilerek yavaşlatıyoruz ki izlenebilsin
-            browser = p.chromium.launch(headless=False, slow_mo=1000)
+            browser = p.chromium.launch(headless=True, slow_mo=0)
             context = browser.new_context()
             yield context
             context.close()
