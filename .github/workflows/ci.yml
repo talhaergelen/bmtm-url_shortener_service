@@ -23,6 +23,8 @@
 
 name: CI/CD Pipeline — URL Shortener Service
 
+env:
+  OTEL_SDK_DISABLED: "true"
 # Tetikleyiciler: Push veya Pull Request
 on:
   push:
